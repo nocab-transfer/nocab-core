@@ -11,16 +11,32 @@ import 'package:nocab_core/src/transfer/sender.dart';
 import 'package:uuid/uuid.dart';
 
 class RequestMaker {
-  static ShareRequest create({
-    required List<File> files,
-    required int transferPort,
-  }) =>
-      ShareRequest(
-        deviceInfo: DeviceManager().currentDeviceInfo,
-        files: files.map((e) => FileInfo.fromFile(e)).toList(),
-        transferPort: transferPort,
-        transferUuid: Uuid().v4(),
-      );
+  /// Creates a [ShareRequest] object.
+  ///
+  /// [files] can be a list of [File] or [FileInfo].
+  ///
+  /// [transferPort] is the port that the receiver will use to connect to the sender.
+  /// Can be any port that is not being used.
+  static ShareRequest create({required List<dynamic> files, required int transferPort}) {
+    List<FileInfo> fileInfos = [];
+
+    try {
+      if (files.runtimeType == List<File>) {
+        fileInfos = files.map((e) => FileInfo.fromFile(e)).toList();
+      } else if (files.runtimeType == List<FileInfo>) {
+        fileInfos = files as List<FileInfo>;
+      }
+    } catch (e) {
+      throw ArgumentError("Invalid file list. Must be a list of File or FileInfo");
+    }
+
+    return ShareRequest(
+      deviceInfo: DeviceManager().currentDeviceInfo,
+      files: fileInfos,
+      transferPort: transferPort,
+      transferUuid: Uuid().v4(),
+    );
+  }
 
   static Future<void> requestTo(DeviceInfo receiverDeviceInfo, {required ShareRequest request, Function(String)? onError}) async {
     Socket socket;
