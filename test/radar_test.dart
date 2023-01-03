@@ -1,5 +1,4 @@
 import 'package:nocab_core/nocab_core.dart';
-import 'package:nocab_core/src/device_manager.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -13,7 +12,7 @@ void main() {
     expect(devices.length, greaterThan(0));
     expect(devices.map((e) => e.name), contains("Radar"));
 
-    DeviceManager().updateDeviceInfo("Radar 2", "127.0.0.1", 5001);
+    DeviceManager().updateDeviceInfo(name: "Radar 2", ip: "127.0.0.1", requestPort: 5001);
 
     devices = await Radar.searchForDevices(62193, baseIp: "127.0.0").last;
 

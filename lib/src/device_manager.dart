@@ -21,11 +21,11 @@ class DeviceManager {
     );
   }
 
-  void updateDeviceInfo(String name, String ip, int requestPort) {
+  void updateDeviceInfo({String? name, String? ip, int? requestPort}) {
     _currentDeviceInfo = DeviceInfo(
-      name: name,
-      ip: ip,
-      requestPort: requestPort,
+      name: name ?? _currentDeviceInfo.name,
+      ip: ip ?? _currentDeviceInfo.ip,
+      requestPort: requestPort ?? _currentDeviceInfo.requestPort,
       opsystem: Platform.operatingSystemVersion,
     );
   }
