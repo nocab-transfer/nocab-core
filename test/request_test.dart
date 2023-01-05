@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:nocab_core/nocab_core.dart';
-import 'package:nocab_core/src/device_manager.dart';
 import 'package:test/test.dart';
 
 void main() {
