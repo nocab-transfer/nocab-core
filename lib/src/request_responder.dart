@@ -6,6 +6,7 @@ import 'package:nocab_core/src/models/file_info.dart';
 import 'package:nocab_core/src/models/share_request.dart';
 import 'package:nocab_core/src/models/share_response.dart';
 import 'package:nocab_core/src/transfer/receiver.dart';
+import 'package:path/path.dart';
 
 extension Responder on ShareRequest {
   Future<void> accept({Function(String)? onError, required Directory downloadDirectory, required Directory tempDirectory}) async {
@@ -13,9 +14,11 @@ extension Responder on ShareRequest {
       if (!downloadDirectory.existsSync()) downloadDirectory.createSync(recursive: true);
 
       files = files
-          .map<FileInfo>(
-            (e) => e..path = FileOperations.findUnusedFilePath(downloadPath: downloadDirectory.path, fileName: e.name),
-          )
+          .map<FileInfo>((e) => e
+            ..path = FileOperations.findUnusedFilePath(
+              downloadPath: joinAll([downloadDirectory.path, ...split(e.subDirectory ?? "")]),
+              fileName: e.name,
+            ))
           .toList();
 
       var shareResponse = ShareResponse(response: true);
