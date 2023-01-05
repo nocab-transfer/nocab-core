@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:nocab_core/nocab_core.dart';
@@ -11,6 +12,9 @@ class DeviceManager {
 
   late DeviceInfo _currentDeviceInfo;
   DeviceInfo get currentDeviceInfo => _currentDeviceInfo;
+
+  final _deviceInfoStreamController = StreamController<DeviceInfo>.broadcast();
+  Stream<DeviceInfo> get onDeviceInfoChanged => _deviceInfoStreamController.stream;
 
   void initialize(String name, String ip, int requestPort) {
     _currentDeviceInfo = DeviceInfo(
@@ -28,5 +32,6 @@ class DeviceManager {
       requestPort: requestPort ?? _currentDeviceInfo.requestPort,
       opsystem: Platform.operatingSystemVersion,
     );
+    _deviceInfoStreamController.add(_currentDeviceInfo);
   }
 }
