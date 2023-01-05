@@ -68,7 +68,11 @@ class Sender extends Transfer {
     }
 
     server.listen((socket) {
-      if (socket.remoteAddress.address != deviceInfo.ip) socket.close();
+      if (socket.remoteAddress.address != deviceInfo.ip) {
+        socket.close();
+        sendPort.send(TransferEvent(TransferEventType.error, message: 'Ip address does not match'));
+        return;
+      }
 
       socket.listen((event) {
         switch (event) {
