@@ -21,11 +21,10 @@ class RequestMaker {
     List<FileInfo> fileInfos = [];
 
     try {
-      if (files.runtimeType == List<File>) {
-        fileInfos = files.map((e) => FileInfo.fromFile(e)).toList();
-      } else if (files.runtimeType == List<FileInfo>) {
-        fileInfos = files as List<FileInfo>;
-      }
+      fileInfos = files.fold(
+        <FileInfo>[],
+        (previousValue, element) => previousValue..add(element is File ? FileInfo.fromFile(element) : element as FileInfo),
+      );
     } catch (e) {
       throw ArgumentError("Invalid file list. Must be a list of File or FileInfo");
     }
