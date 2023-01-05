@@ -80,6 +80,9 @@ class DataHandler {
       );
     });
 
+    // Send the start event to the main isolate
+    sendPort.send(StartReport(startTime: DateTime.now()));
+
     // listen for data from sender/receiver isolate
     handledReceiverPort.listen((data) {
       data as TransferEvent;
