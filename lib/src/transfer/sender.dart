@@ -59,11 +59,9 @@ class Sender extends Transfer {
         sendPort.send(TransferEvent(TransferEventType.fileEnd, currentFile: fileInfo));
         queue.remove(fileInfo);
         if (queue.isEmpty) sendPort.send(TransferEvent(TransferEventType.end));
-        Isolate.current.kill();
       } catch (e) {
         socket.close();
         sendPort.send(TransferEvent(TransferEventType.error, message: e.toString()));
-        Isolate.current.kill();
       }
     }
 

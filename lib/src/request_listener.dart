@@ -40,7 +40,6 @@ class RequestListener {
 
       socket.listen(
         (event) {
-          print("event: ${utf8.decode(event)}");
           try {
             String data = utf8.decode(base64.decode(utf8.decode(event)));
             activeRequest = ShareRequest.fromJson(jsonDecode(data));

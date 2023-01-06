@@ -18,6 +18,18 @@ void main() {
         byteSize: file.lengthSync(),
         isEncrypted: false,
       ),
+      FileInfo(
+        name: "${p.basename(file.path)}1",
+        path: file.path,
+        byteSize: file.lengthSync(),
+        isEncrypted: false,
+      ),
+      FileInfo(
+        name: "${p.basename(file.path)}2",
+        path: file.path,
+        byteSize: file.lengthSync(),
+        isEncrypted: false,
+      ),
     ];
 
     String uuid = Uuid().v4();
@@ -26,7 +38,7 @@ void main() {
     await sender.start();
 
     // override path
-    List<FileInfo> receiverFiles = senderFiles.map((e) => e..path = "${e.path!}downloaded").toList();
+    List<FileInfo> receiverFiles = senderFiles.map((e) => e..path = "${e.path!}downloaded${e.name}").toList();
 
     var receiver = Receiver(
       deviceInfo: senderDeviceInfo,
@@ -40,8 +52,11 @@ void main() {
 
     await receiver.onEvent.last;
 
-    var f = File(receiverFiles.first.path!);
-    expect(f.readAsStringSync(), equals("This is a test file"));
-    await f.delete();
+    for (var fileInfo in receiverFiles) {
+      File file = File(fileInfo.path!);
+      expect(file.existsSync(), equals(true));
+      expect(file.lengthSync(), equals(fileInfo.byteSize));
+      await file.delete();
+    }
   });
 }

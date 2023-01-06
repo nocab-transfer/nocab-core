@@ -89,13 +89,11 @@ class Receiver extends Transfer {
                 await FileOperations.tmpToFile(tempFile, currentFile.path!);
               } catch (e) {
                 sendPort.send(TransferEvent(TransferEventType.error, message: e.toString()));
-                Isolate.current.kill();
                 return;
               }
 
               if (queue.isEmpty) {
                 sendPort.send(TransferEvent(TransferEventType.end));
-                Isolate.current.kill();
                 return;
               }
 
