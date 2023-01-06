@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 void main() {
   test('Radar Test', () async {
     DeviceManager().initialize("Radar", "127.0.0.1", 5001);
-    Radar().start(radarPort: 62193, onError: (p0) => throw Exception(p0));
+    Radar().start(radarPort: 62193, onError: (p0) => throw p0);
 
     List<DeviceInfo> devices = [];
     devices = await Radar.searchForDevices(62193, baseIp: "127.0.0").last;

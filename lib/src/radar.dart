@@ -18,7 +18,7 @@ class Radar {
 
   ServerSocket? radarSocket;
 
-  Future<void> start({int radarPort = 62193, Function(String)? onError}) async {
+  Future<void> start({int radarPort = 62193, Function(Object)? onError}) async {
     try {
       radarSocket = await ServerSocket.bind(InternetAddress.anyIPv4, radarPort);
 
@@ -26,7 +26,7 @@ class Radar {
         socket.write(base64.encode(utf8.encode(json.encode(DeviceManager().currentDeviceInfo.toJson()))));
       });
     } catch (e) {
-      onError?.call(e.toString());
+      onError?.call(e);
     }
   }
 

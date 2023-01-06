@@ -9,7 +9,7 @@ import 'package:nocab_core/src/transfer/receiver.dart';
 import 'package:path/path.dart';
 
 extension Responder on ShareRequest {
-  Future<void> accept({Function(String)? onError, required Directory downloadDirectory, required Directory tempDirectory}) async {
+  Future<void> accept({Function(Object)? onError, required Directory downloadDirectory, required Directory tempDirectory}) async {
     try {
       if (!downloadDirectory.existsSync()) downloadDirectory.createSync(recursive: true);
 
@@ -36,19 +36,19 @@ extension Responder on ShareRequest {
       socket.close();
       registerResponse(shareResponse);
     } catch (e) {
-      onError?.call(e.toString());
+      onError?.call(e);
       return;
     }
   }
 
-  void reject({Function(String)? onError, String? info}) {
+  void reject({Function(Object)? onError, String? info}) {
     try {
       var shareResponse = ShareResponse(response: false, info: info ?? "User rejected the request");
       socket.write(base64.encode(utf8.encode(json.encode(shareResponse.toJson()))));
       socket.close();
       registerResponse(shareResponse);
     } catch (e) {
-      onError?.call(e.toString());
+      onError?.call(e);
     }
   }
 }

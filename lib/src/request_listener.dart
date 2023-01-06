@@ -19,11 +19,11 @@ class RequestListener {
   ServerSocket? serverSocket;
 
   ShareRequest? activeRequest;
-  Future<void> start({Function(String)? onError}) async {
+  Future<void> start({Function(Object)? onError}) async {
     try {
       serverSocket = await ServerSocket.bind(InternetAddress.anyIPv4, DeviceManager().currentDeviceInfo.requestPort);
     } catch (e) {
-      onError?.call(e.toString());
+      onError?.call(e);
     }
 
     serverSocket?.listen((socket) {
@@ -31,27 +31,31 @@ class RequestListener {
         if (activeRequest != null) {
           var shareResponse = ShareResponse(response: false, info: "Another request is in progress");
           socket.write(base64.encode(utf8.encode(json.encode(shareResponse.toJson()))));
-          socket.close();
+          socket.flush().then((value) => socket.close());
           return;
         }
       } catch (e) {
         socket.close();
       }
 
-      socket.listen((event) {
-        try {
-          String data = utf8.decode(base64.decode(utf8.decode(event)));
-          activeRequest = ShareRequest.fromJson(jsonDecode(data));
-          activeRequest!.socket = socket;
-          _requestHandler(activeRequest!, socket);
-        } catch (e) {
-          onError?.call(e.toString());
-          socket.close();
-        }
-      }, onDone: () {
-        if (activeRequest?.isResponded == false) activeRequest!.registerResponse(ShareResponse(response: false, info: "Connection lost"));
-        activeRequest = null;
-      });
+      socket.listen(
+        (event) {
+          print("event: ${utf8.decode(event)}");
+          try {
+            String data = utf8.decode(base64.decode(utf8.decode(event)));
+            activeRequest = ShareRequest.fromJson(jsonDecode(data));
+            activeRequest!.socket = socket;
+            socket.done.then((value) {
+              if (activeRequest?.isResponded == false) activeRequest!.registerResponse(ShareResponse(response: false, info: "Connection lost"));
+              activeRequest = null;
+            });
+            _requestHandler(activeRequest!, socket);
+          } catch (e) {
+            onError?.call(e);
+            socket.close();
+          }
+        },
+      );
     });
   }
 

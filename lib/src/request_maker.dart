@@ -37,17 +37,14 @@ class RequestMaker {
     );
   }
 
-  static Future<void> requestTo(DeviceInfo receiverDeviceInfo, {required ShareRequest request, Function(String)? onError}) async {
+  static Future<void> requestTo(DeviceInfo receiverDeviceInfo, {required ShareRequest request, Function(Object)? onError}) async {
     Socket socket;
 
     try {
       socket = await Socket.connect(receiverDeviceInfo.ip, receiverDeviceInfo.requestPort);
       socket.write(base64.encode(utf8.encode(json.encode(request.toJson()))));
-    } on SocketException catch (e) {
-      onError?.call(e.message);
-      return;
     } catch (e) {
-      onError?.call(e.toString());
+      onError?.call(e);
       return;
     }
 
@@ -60,14 +57,8 @@ class RequestMaker {
           })))),
         ),
       );
-    } on TimeoutException {
-      onError?.call("Timeout, cannot read response");
-      return;
-    } on StateError {
-      onError?.call("Connection lost, cannot read response");
-      return;
     } catch (e) {
-      onError?.call(e.toString());
+      onError?.call(e);
       return;
     }
 
