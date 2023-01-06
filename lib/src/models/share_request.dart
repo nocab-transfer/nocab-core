@@ -13,20 +13,18 @@ class ShareRequest {
   late String transferUuid;
 
   late Socket socket; // for response
-  late bool _responded = false;
   Transfer? linkedTransfer;
 
-  bool get responded => _responded;
+  final Completer<ShareResponse> _completer = Completer<ShareResponse>();
+  Future<ShareResponse> get onResponse => _completer.future;
+  bool get isResponded => _completer.isCompleted;
 
-  final responseController = StreamController<ShareResponse>.broadcast();
-  Future<ShareResponse> get onResponse => responseController.stream.first;
-
-  ShareRequest({required this.files, required this.deviceInfo, required this.transferPort, required this.transferUuid}) {
-    responseController.stream.listen((event) {
-      _responded = true;
-      responseController.close();
-    });
+  void registerResponse(ShareResponse response) {
+    if (isResponded) return;
+    _completer.complete(response);
   }
+
+  ShareRequest({required this.files, required this.deviceInfo, required this.transferPort, required this.transferUuid});
 
   ShareRequest.fromJson(Map<String, dynamic> json) {
     files = List<FileInfo>.from(json['files'].map((x) => FileInfo.fromJson(x)));

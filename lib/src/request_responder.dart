@@ -34,7 +34,7 @@ extension Responder on ShareRequest {
 
       socket.write(base64.encode(utf8.encode(json.encode(shareResponse.toJson()))));
       socket.close();
-      responseController.add(shareResponse);
+      registerResponse(shareResponse);
     } catch (e) {
       onError?.call(e.toString());
       return;
@@ -46,7 +46,7 @@ extension Responder on ShareRequest {
       var shareResponse = ShareResponse(response: false, info: info ?? "User rejected the request");
       socket.write(base64.encode(utf8.encode(json.encode(shareResponse.toJson()))));
       socket.close();
-      responseController.add(shareResponse);
+      registerResponse(shareResponse);
     } catch (e) {
       onError?.call(e.toString());
     }

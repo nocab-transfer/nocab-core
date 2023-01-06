@@ -49,7 +49,7 @@ class RequestListener {
           socket.close();
         }
       }, onDone: () {
-        if (activeRequest?.responded == false) activeRequest!.responseController.add(ShareResponse(response: false, info: "Connection lost"));
+        if (activeRequest?.isResponded == false) activeRequest!.registerResponse(ShareResponse(response: false, info: "Connection lost"));
         activeRequest = null;
       });
     });

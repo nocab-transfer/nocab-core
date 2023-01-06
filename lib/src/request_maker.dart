@@ -72,7 +72,7 @@ class RequestMaker {
     }
 
     if (!shareResponse.response) {
-      request.responseController.add(shareResponse);
+      request.registerResponse(shareResponse);
       return;
     }
 
@@ -83,6 +83,6 @@ class RequestMaker {
       uuid: request.transferUuid,
     )..start();
 
-    request.responseController.add(shareResponse);
+    request.registerResponse(shareResponse);
   }
 }
