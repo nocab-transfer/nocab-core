@@ -35,6 +35,7 @@ class RequestListener {
           return;
         }
       } catch (e) {
+        onError?.call(e);
         socket.close();
       }
 
@@ -63,7 +64,6 @@ class RequestListener {
   }
 
   void stop() {
-    _requestController.close();
     serverSocket?.close();
   }
 }
