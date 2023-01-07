@@ -34,7 +34,7 @@ class Radar {
     radarSocket?.close();
   }
 
-  static Stream<List<DeviceInfo>> searchForDevices(int radarPort, {String? baseIp}) async* {
+  static Stream<List<DeviceInfo>> searchForDevices(int radarPort, {String? baseIp, bool skipCurrentDevice = true}) async* {
     List<DeviceInfo> devices = [];
     baseIp ??= DeviceManager().currentDeviceInfo.ip.split('.').sublist(0, 3).join('.');
     Socket? socket;
@@ -44,7 +44,9 @@ class Radar {
         Uint8List data = await socket.first.timeout(const Duration(seconds: 5));
         if (data.isNotEmpty) {
           var device = DeviceInfo.fromJson(json.decode(utf8.decode(base64.decode(utf8.decode(data)))));
-          if (device.ip == DeviceManager().currentDeviceInfo.ip && device.requestPort == DeviceManager().currentDeviceInfo.requestPort) continue;
+          if (skipCurrentDevice &&
+              device.ip == DeviceManager().currentDeviceInfo.ip &&
+              device.requestPort == DeviceManager().currentDeviceInfo.requestPort) continue;
           devices.add(device);
           yield devices;
         }
