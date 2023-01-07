@@ -33,6 +33,7 @@ extension Responder on ShareRequest {
       await linkedTransfer!.start();
 
       socket.write(base64.encode(utf8.encode(json.encode(shareResponse.toJson()))));
+      await socket.flush();
       socket.close();
       registerResponse(shareResponse);
     } catch (e) {
@@ -45,7 +46,7 @@ extension Responder on ShareRequest {
     try {
       var shareResponse = ShareResponse(response: false, info: info ?? "User rejected the request");
       socket.write(base64.encode(utf8.encode(json.encode(shareResponse.toJson()))));
-      socket.close();
+      socket.flush().then((value) => socket.close());
       registerResponse(shareResponse);
     } catch (e) {
       onError?.call(e);
