@@ -34,7 +34,15 @@ class Sender extends Transfer {
     final DeviceInfo deviceInfo = args[2] as DeviceInfo;
     final int transferPort = args[3] as int;
 
-    RawServerSocket server = await RawServerSocket.bind(InternetAddress.anyIPv4, transferPort);
+    RawServerSocket? server;
+    try {
+      server = await RawServerSocket.bind(InternetAddress.anyIPv4, transferPort);
+    } catch (e, stackTrace) {
+      sendPort.send(TransferEvent(
+        TransferEventType.error,
+        error: CoreError(e.toString(), className: 'Sender', methodName: '_sendWorker', stackTrace: stackTrace),
+      ));
+    }
 
     Future<void> send(FileInfo fileInfo, RawSocket socket) async {
       try {
@@ -59,16 +67,27 @@ class Sender extends Transfer {
         sendPort.send(TransferEvent(TransferEventType.fileEnd, currentFile: fileInfo));
         queue.remove(fileInfo);
         if (queue.isEmpty) sendPort.send(TransferEvent(TransferEventType.end));
-      } catch (e) {
+      } catch (e, stackTrace) {
         socket.close();
-        sendPort.send(TransferEvent(TransferEventType.error, message: e.toString()));
+        sendPort.send(TransferEvent(
+          TransferEventType.error,
+          error: CoreError(e.toString(), className: 'Sender', methodName: '_sendWorker', stackTrace: stackTrace),
+        ));
       }
     }
 
-    server.listen((socket) {
+    server!.listen((socket) {
       if (socket.remoteAddress.address != deviceInfo.ip) {
         socket.close();
-        sendPort.send(TransferEvent(TransferEventType.error, message: 'Ip address does not match'));
+        sendPort.send(TransferEvent(
+          TransferEventType.error,
+          error: CoreError(
+            'Ip address does not match: ${socket.remoteAddress.address} != ${deviceInfo.ip}',
+            className: 'Sender',
+            methodName: '_sendWorker',
+            stackTrace: StackTrace.current,
+          ),
+        ));
         return;
       }
 

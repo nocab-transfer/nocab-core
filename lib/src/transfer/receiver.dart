@@ -87,8 +87,18 @@ class Receiver extends Transfer {
 
               try {
                 await FileOperations.tmpToFile(tempFile, currentFile.path!);
-              } catch (e) {
-                sendPort.send(TransferEvent(TransferEventType.error, message: e.toString()));
+              } catch (e, stackTrace) {
+                sendPort.send(
+                  TransferEvent(
+                    TransferEventType.error,
+                    error: CoreError(
+                      e.toString(),
+                      className: "Receiver",
+                      methodName: "_receiveWorker",
+                      stackTrace: stackTrace,
+                    ),
+                  ),
+                );
                 return;
               }
 

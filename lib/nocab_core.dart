@@ -12,6 +12,7 @@ export 'src/models/device_info.dart';
 export 'src/models/file_info.dart';
 export 'src/models/share_request.dart';
 export 'src/models/share_response.dart';
+export 'src/models/core_error.dart';
 
 export 'src/transfer/report_models/base_report.dart';
 

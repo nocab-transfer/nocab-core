@@ -114,7 +114,7 @@ Future<void> main() async {
           break;
         case ErrorReport:
           event as ErrorReport;
-          print("Error occured. Error: ${event.message}");
+          print("Error occured. Error: ${event.error.message}");
           break;
         default:
           break;
@@ -175,7 +175,7 @@ Future<void> main() async {
           break;
         case ErrorReport:
           event as ErrorReport;
-          print("Error occured. Error: ${event.message}");
+          print("Error occured. Error: ${event.error.message}");
           break;
         default:
           break;

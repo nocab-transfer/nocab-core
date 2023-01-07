@@ -1,9 +1,9 @@
 part of report_models;
 
 class ErrorReport extends Report {
-  String message;
+  CoreError error;
 
   ErrorReport({
-    required this.message,
+    required this.error,
   });
 }

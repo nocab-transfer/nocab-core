@@ -43,7 +43,7 @@ class DataHandler {
     int writtenBytes = 0;
     Duration sendDuration = const Duration(milliseconds: 100);
 
-    Stopwatch stopwatch = Stopwatch();
+    Stopwatch stopwatch = Stopwatch()..start();
 
     FileInfo? currentFile;
     List<FileInfo> filesTransferred = [];
@@ -54,20 +54,27 @@ class DataHandler {
       // If the stopwatch is not running or the elapsed time is 0, return to prevent division by 0 and false reports
       if (!stopwatch.isRunning || stopwatch.elapsedMilliseconds == 0) return;
 
-      // prevent division by 0 and false reports
-      if (currentFile == null || currentFile!.byteSize == 0 || writtenBytes == 0) return;
-
       // timeout if the speed is 0 for 30 seconds
       if (writtenBytes / stopwatch.elapsedMilliseconds * 1000 == 0) {
         timeoutIndicatorMilliseconds += sendDuration.inMilliseconds;
         if (timeoutIndicatorMilliseconds >= 30000) {
-          sendPort.send(ErrorReport(message: "Transfer timed out"));
+          sendPort.send(ErrorReport(
+            error: CoreError(
+              'Transfer timed out',
+              className: 'DataHandler',
+              methodName: '_handleData',
+              stackTrace: StackTrace.current,
+            ),
+          ));
           timer.cancel();
           return;
         }
       } else {
         timeoutIndicatorMilliseconds = 0;
       }
+
+      // prevent division by 0 and false reports
+      if (currentFile == null || currentFile!.byteSize == 0 || writtenBytes == 0) return;
 
       // calculate speed and progress and send it to the main isolate
       sendPort.send(
@@ -88,6 +95,7 @@ class DataHandler {
       data as TransferEvent;
       switch (data.type) {
         case TransferEventType.start:
+          stopwatch.reset();
           stopwatch.start();
           writtenBytes = 0;
           currentFile = data.currentFile;
@@ -111,7 +119,7 @@ class DataHandler {
           break;
         case TransferEventType.error:
           stopwatch.stop();
-          sendPort.send(ErrorReport(message: data.message!));
+          sendPort.send(ErrorReport(error: data.error!));
           workerIsolate.kill();
           Isolate.current.kill();
           break;
