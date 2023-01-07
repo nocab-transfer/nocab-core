@@ -2,9 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:nocab_core/src/device_manager.dart';
-import 'package:nocab_core/src/models/share_request.dart';
-import 'package:nocab_core/src/models/share_response.dart';
+import 'package:nocab_core/nocab_core.dart';
 
 class RequestListener {
   static final RequestListener _singleton = RequestListener._internal();
@@ -19,11 +17,11 @@ class RequestListener {
   ServerSocket? serverSocket;
 
   ShareRequest? activeRequest;
-  Future<void> start({Function(Object)? onError}) async {
+  Future<void> start({Function(CoreError)? onError}) async {
     try {
       serverSocket = await ServerSocket.bind(InternetAddress.anyIPv4, DeviceManager().currentDeviceInfo.requestPort);
-    } catch (e) {
-      onError?.call(e);
+    } catch (e, stackTrace) {
+      onError?.call(CoreError(e.toString(), className: "RequestListener", methodName: "start", stackTrace: stackTrace));
     }
 
     serverSocket?.listen((socket) {
@@ -34,8 +32,8 @@ class RequestListener {
           socket.flush().then((value) => socket.close());
           return;
         }
-      } catch (e) {
-        onError?.call(e);
+      } catch (e, stackTrace) {
+        onError?.call(CoreError(e.toString(), className: "RequestListener", methodName: "start", stackTrace: stackTrace));
         socket.close();
       }
 
@@ -50,8 +48,8 @@ class RequestListener {
               activeRequest = null;
             });
             _requestHandler(activeRequest!, socket);
-          } catch (e) {
-            onError?.call(e);
+          } catch (e, stackTrace) {
+            onError?.call(CoreError(e.toString(), className: "RequestListener", methodName: "start", stackTrace: stackTrace));
             socket.close();
           }
         },

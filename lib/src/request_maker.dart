@@ -2,12 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:nocab_core/src/device_manager.dart';
-import 'package:nocab_core/src/models/device_info.dart';
-import 'package:nocab_core/src/models/file_info.dart';
-import 'package:nocab_core/src/models/share_request.dart';
-import 'package:nocab_core/src/models/share_response.dart';
-import 'package:nocab_core/src/transfer/sender.dart';
+import 'package:nocab_core/nocab_core.dart';
 import 'package:uuid/uuid.dart';
 
 class RequestMaker {
@@ -37,14 +32,14 @@ class RequestMaker {
     );
   }
 
-  static Future<void> requestTo(DeviceInfo receiverDeviceInfo, {required ShareRequest request, Function(Object)? onError}) async {
+  static Future<void> requestTo(DeviceInfo receiverDeviceInfo, {required ShareRequest request, Function(CoreError)? onError}) async {
     Socket socket;
 
     try {
       socket = await Socket.connect(receiverDeviceInfo.ip, receiverDeviceInfo.requestPort);
       socket.write(base64.encode(utf8.encode(json.encode(request.toJson()))));
-    } catch (e) {
-      onError?.call(e);
+    } catch (e, stackTrace) {
+      onError?.call(CoreError(e.toString(), className: "RequestMaker", methodName: "requestTo", stackTrace: stackTrace));
       return;
     }
 
@@ -57,8 +52,8 @@ class RequestMaker {
           })))),
         ),
       );
-    } catch (e) {
-      onError?.call(e);
+    } catch (e, stackTrace) {
+      onError?.call(CoreError(e.toString(), className: "RequestMaker", methodName: "requestTo", stackTrace: stackTrace));
       return;
     }
 

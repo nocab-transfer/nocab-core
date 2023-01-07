@@ -3,8 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:nocab_core/src/device_manager.dart';
-import 'package:nocab_core/src/models/device_info.dart';
+import 'package:nocab_core/nocab_core.dart';
 
 class Radar {
   static final Radar _singleton = Radar._internal();
@@ -18,15 +17,15 @@ class Radar {
 
   ServerSocket? radarSocket;
 
-  Future<void> start({int radarPort = 62193, Function(Object)? onError}) async {
+  Future<void> start({int radarPort = 62193, Function(CoreError)? onError}) async {
     try {
       radarSocket = await ServerSocket.bind(InternetAddress.anyIPv4, radarPort);
 
       radarSocket?.listen((socket) {
         socket.write(base64.encode(utf8.encode(json.encode(DeviceManager().currentDeviceInfo.toJson()))));
       });
-    } catch (e) {
-      onError?.call(e);
+    } catch (e, stackTrace) {
+      onError?.call(CoreError(e.toString(), className: "Radar", methodName: "start", stackTrace: stackTrace));
     }
   }
 

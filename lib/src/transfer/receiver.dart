@@ -52,8 +52,17 @@ class Receiver extends Transfer {
       File tempFile = File(join(tempFolder.path, "${basename(queue.first.path!)}.nocabtmp"));
       FileInfo currentFile = queue.first;
 
-      if (await tempFile.exists()) await tempFile.delete();
-      await tempFile.create(recursive: true);
+      try {
+        if (await tempFile.exists()) await tempFile.delete();
+        await tempFile.create(recursive: true);
+      } catch (e, stackTrace) {
+        sendPort.send(
+          TransferEvent(
+            TransferEventType.error,
+            error: CoreError(e.toString(), className: "Receiver", methodName: "_receiveWorker", stackTrace: stackTrace),
+          ),
+        );
+      }
 
       IOSink currentSink = tempFile.openWrite(mode: FileMode.append);
 
@@ -65,17 +74,26 @@ class Receiver extends Transfer {
       socket.listen((event) async {
         switch (event) {
           case RawSocketEvent.read:
-            buffer = socket?.read();
+            try {
+              buffer = socket?.read();
 
-            if (buffer != null) {
-              currentSink.add(buffer!);
-              totalRead += buffer!.length;
+              if (buffer != null) {
+                currentSink.add(buffer!);
+                totalRead += buffer!.length;
 
-              sendPort.send(TransferEvent(
-                TransferEventType.event,
-                currentFile: queue.first,
-                writtenBytes: totalRead,
-              ));
+                sendPort.send(TransferEvent(
+                  TransferEventType.event,
+                  currentFile: queue.first,
+                  writtenBytes: totalRead,
+                ));
+              }
+            } catch (e, stackTrace) {
+              sendPort.send(
+                TransferEvent(
+                  TransferEventType.error,
+                  error: CoreError(e.toString(), className: "Receiver", methodName: "_receiveWorker", stackTrace: stackTrace),
+                ),
+              );
             }
 
             if (totalRead == queue.first.byteSize) {

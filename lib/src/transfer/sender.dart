@@ -94,10 +94,18 @@ class Sender extends Transfer {
       socket.listen((event) {
         switch (event) {
           case RawSocketEvent.read:
-            String data = utf8.decode(socket.read()!);
-            FileInfo file = queue.firstWhere((element) => element.name == data);
-            sendPort.send(TransferEvent(TransferEventType.start, currentFile: file));
-            send(file, socket);
+            try {
+              String data = utf8.decode(socket.read()!);
+              FileInfo file = queue.firstWhere((element) => element.name == data);
+              sendPort.send(TransferEvent(TransferEventType.start, currentFile: file));
+              send(file, socket);
+            } catch (e, stackTrace) {
+              socket.close();
+              sendPort.send(TransferEvent(
+                TransferEventType.error,
+                error: CoreError(e.toString(), className: 'Sender', methodName: '_sendWorker', stackTrace: stackTrace),
+              ));
+            }
             break;
           default:
             break;

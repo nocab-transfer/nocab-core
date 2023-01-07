@@ -1,15 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:nocab_core/src/file_operations/file_operations.dart';
-import 'package:nocab_core/src/models/file_info.dart';
-import 'package:nocab_core/src/models/share_request.dart';
-import 'package:nocab_core/src/models/share_response.dart';
-import 'package:nocab_core/src/transfer/receiver.dart';
+import 'package:nocab_core/nocab_core.dart';
 import 'package:path/path.dart';
 
 extension Responder on ShareRequest {
-  Future<void> accept({Function(Object)? onError, required Directory downloadDirectory, required Directory tempDirectory}) async {
+  Future<void> accept({Function(CoreError)? onError, required Directory downloadDirectory, required Directory tempDirectory}) async {
     try {
       if (!downloadDirectory.existsSync()) downloadDirectory.createSync(recursive: true);
 
@@ -36,20 +32,20 @@ extension Responder on ShareRequest {
       await socket.flush();
       socket.close();
       registerResponse(shareResponse);
-    } catch (e) {
-      onError?.call(e);
+    } catch (e, stackTrace) {
+      onError?.call(CoreError(e.toString(), className: "RequestResponder", methodName: "accept", stackTrace: stackTrace));
       return;
     }
   }
 
-  void reject({Function(Object)? onError, String? info}) {
+  void reject({Function(CoreError)? onError, String? info}) {
     try {
       var shareResponse = ShareResponse(response: false, info: info ?? "User rejected the request");
       socket.write(base64.encode(utf8.encode(json.encode(shareResponse.toJson()))));
       socket.flush().then((value) => socket.close());
       registerResponse(shareResponse);
-    } catch (e) {
-      onError?.call(e);
+    } catch (e, stackTrace) {
+      onError?.call(CoreError(e.toString(), className: "RequestResponder", methodName: "reject", stackTrace: stackTrace));
     }
   }
 }
