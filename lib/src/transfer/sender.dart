@@ -58,6 +58,7 @@ class Sender extends Transfer {
           totalWrite += bytesWritten;
           file.setPositionSync(totalWrite);
 
+          if (bytesWritten == 0) continue;
           sendPort.send(TransferEvent(
             TransferEventType.event,
             currentFile: fileInfo,

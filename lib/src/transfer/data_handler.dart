@@ -53,7 +53,7 @@ class DataHandler {
     Timer.periodic(sendDuration, (timer) {
       // If the stopwatch is not running or the elapsed time is 0, return to prevent division by 0 and false reports
       if (!stopwatch.isRunning || stopwatch.elapsedMilliseconds == 0) return;
-
+      print(writtenBytes);
       // timeout if the speed is 0 for 30 seconds
       if (writtenBytes / stopwatch.elapsedMilliseconds * 1000 == 0) {
         timeoutIndicatorMilliseconds += sendDuration.inMilliseconds;
@@ -74,7 +74,7 @@ class DataHandler {
       }
 
       // prevent division by 0 and false reports
-      if (currentFile == null || currentFile!.byteSize == 0 || writtenBytes == 0) return;
+      if (currentFile == null || currentFile!.byteSize == 0) return;
 
       // calculate speed and progress and send it to the main isolate
       sendPort.send(
@@ -85,6 +85,8 @@ class DataHandler {
           progress: writtenBytes / currentFile!.byteSize,
         ),
       );
+
+      writtenBytes = 0; // reset written bytes
     });
 
     // Send the start event to the main isolate
