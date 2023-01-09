@@ -53,7 +53,6 @@ class DataHandler {
     Timer.periodic(sendDuration, (timer) {
       // If the stopwatch is not running or the elapsed time is 0, return to prevent division by 0 and false reports
       if (!stopwatch.isRunning || stopwatch.elapsedMilliseconds == 0) return;
-      print(writtenBytes);
       // timeout if the speed is 0 for 30 seconds
       if (writtenBytes / stopwatch.elapsedMilliseconds * 1000 == 0) {
         timeoutIndicatorMilliseconds += sendDuration.inMilliseconds;
