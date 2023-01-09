@@ -66,6 +66,8 @@ class DataHandler {
             ),
           ));
           timer.cancel();
+          workerIsolate.kill();
+          Isolate.current.kill();
           return;
         }
       } else {
