@@ -53,16 +53,17 @@ class Sender extends Transfer {
 
         int readBytesCountFromFile;
         while ((readBytesCountFromFile = file.readIntoSync(buffer)) > 0) {
-          bytesWritten = socket.write(buffer.toList(), 0, readBytesCountFromFile);
-          if (bytesWritten == 0) continue;
+          bytesWritten = socket.write(buffer, 0, readBytesCountFromFile);
           totalWrite += bytesWritten;
           file.setPositionSync(totalWrite);
+          if (bytesWritten == 0) continue;
           sendPort.send(TransferEvent(
             TransferEventType.event,
             currentFile: fileInfo,
             writtenBytes: totalWrite,
           ));
         }
+        file.closeSync();
         sendPort.send(TransferEvent(TransferEventType.fileEnd, currentFile: fileInfo));
         queue.remove(fileInfo);
       } catch (e, stackTrace) {
