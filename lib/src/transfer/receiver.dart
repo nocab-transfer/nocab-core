@@ -97,7 +97,6 @@ class Receiver extends Transfer {
             }
 
             if (totalRead == queue.first.byteSize) {
-              socket?.close();
               sendPort.send(TransferEvent(TransferEventType.fileEnd, currentFile: queue.first));
 
               queue.removeAt(0);
@@ -119,6 +118,8 @@ class Receiver extends Transfer {
                 );
                 return;
               }
+
+              socket?.close();
 
               if (queue.isEmpty) {
                 sendPort.send(TransferEvent(TransferEventType.end));

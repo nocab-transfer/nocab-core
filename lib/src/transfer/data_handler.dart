@@ -66,8 +66,8 @@ class DataHandler {
             ),
           ));
           timer.cancel();
-          workerIsolate.kill();
-          Isolate.current.kill();
+          workerIsolate.kill(priority: Isolate.immediate);
+          Isolate.current.kill(priority: Isolate.immediate);
           return;
         }
       } else {

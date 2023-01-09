@@ -48,17 +48,15 @@ class Sender extends Transfer {
       try {
         final Uint8List buffer = Uint8List(1024 * 8);
         RandomAccessFile file = await File(fileInfo.path!).open();
-
         int bytesWritten = 0;
         int totalWrite = 0;
 
         int readBytesCountFromFile;
         while ((readBytesCountFromFile = file.readIntoSync(buffer)) > 0) {
-          bytesWritten = socket.write(buffer.getRange(0, readBytesCountFromFile).toList());
+          bytesWritten = socket.write(buffer.toList(), 0, readBytesCountFromFile);
+          if (bytesWritten == 0) continue;
           totalWrite += bytesWritten;
           file.setPositionSync(totalWrite);
-
-          if (bytesWritten == 0) continue;
           sendPort.send(TransferEvent(
             TransferEventType.event,
             currentFile: fileInfo,
@@ -67,7 +65,6 @@ class Sender extends Transfer {
         }
         sendPort.send(TransferEvent(TransferEventType.fileEnd, currentFile: fileInfo));
         queue.remove(fileInfo);
-        if (queue.isEmpty) sendPort.send(TransferEvent(TransferEventType.end));
       } catch (e, stackTrace) {
         socket.close();
         sendPort.send(TransferEvent(
@@ -107,6 +104,11 @@ class Sender extends Transfer {
                 error: CoreError(e.toString(), className: 'Sender', methodName: '_sendWorker', stackTrace: stackTrace),
               ));
             }
+            break;
+          case RawSocketEvent.closed:
+          case RawSocketEvent.readClosed:
+            if (queue.isEmpty) sendPort.send(TransferEvent(TransferEventType.end));
+            socket.close();
             break;
           default:
             break;
