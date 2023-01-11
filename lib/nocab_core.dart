@@ -19,3 +19,5 @@ export 'src/transfer/report_models/base_report.dart';
 export 'src/transfer/transfer.dart';
 export 'src/transfer/sender.dart';
 export 'src/transfer/receiver.dart';
+
+export 'package:nocab_logger/nocab_logger.dart';
