@@ -3,7 +3,6 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:typed_data';
 
-import 'package:nocab_logger/nocab_logger.dart';
 import 'package:nocab_core/nocab_core.dart';
 import 'package:nocab_core/src/transfer/data_handler.dart';
 import 'package:nocab_core/src/transfer/transfer_event_model.dart';
@@ -40,7 +39,7 @@ class Sender extends Transfer {
     RawServerSocket? server;
     try {
       server = await RawServerSocket.bind(InternetAddress.anyIPv4, transferPort);
-      Logger().info('_sendWorker server started', 'Sender');
+      Logger().info('_sendWorker server started on port $transferPort', 'Sender');
     } catch (e, stackTrace) {
       Logger().error('_sendWorker server binding error', 'Sender', error: e, stackTrace: stackTrace);
 
