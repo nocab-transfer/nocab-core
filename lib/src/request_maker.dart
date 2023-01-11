@@ -86,7 +86,9 @@ class RequestMaker {
       files: request.files,
       transferPort: request.transferPort,
       uuid: request.transferUuid,
-    )..start();
+    );
+
+    await request.linkedTransfer!.start();
 
     request.registerResponse(shareResponse);
   }
