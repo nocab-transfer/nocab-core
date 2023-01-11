@@ -6,7 +6,6 @@ import 'dart:typed_data';
 import 'package:nocab_core/nocab_core.dart';
 import 'package:nocab_core/src/transfer/data_handler.dart';
 import 'package:nocab_core/src/transfer/transfer_event_model.dart';
-import 'package:nocab_logger/nocab_logger.dart';
 import 'package:path/path.dart';
 
 class Receiver extends Transfer {
@@ -42,6 +41,7 @@ class Receiver extends Transfer {
 
     Future<void> receiveFile() async {
       RawSocket? socket;
+      Logger().info('_receiveWorker trying to connect ${deviceInfo.ip}:$transferPort', 'Receiver');
       while (socket == null) {
         try {
           socket = await RawSocket.connect(deviceInfo.ip, transferPort);
