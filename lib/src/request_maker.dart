@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:nocab_core/nocab_core.dart';
-import 'package:nocab_logger/nocab_logger.dart';
 import 'package:uuid/uuid.dart';
 
 class RequestMaker {
@@ -45,7 +44,8 @@ class RequestMaker {
           "Request sent to ${request.deviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort}) with ${request.files.length} files",
           "RequestMaker");
     } catch (e, stackTrace) {
-      Logger().error("Cannot request to ${request.deviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})", "RequestMaker");
+      Logger().error("Cannot request to ${request.deviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})", "RequestMaker",
+          error: e, stackTrace: stackTrace);
       onError?.call(CoreError(e.toString(), className: "RequestMaker", methodName: "requestTo", stackTrace: stackTrace));
       return;
     }
