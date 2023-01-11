@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:nocab_core/nocab_core.dart';
+import 'package:nocab_logger/nocab_logger.dart';
 
 class DeviceManager {
   static final DeviceManager _singleton = DeviceManager._internal();
@@ -17,6 +18,8 @@ class DeviceManager {
   Stream<DeviceInfo> get onDeviceInfoChanged => _deviceInfoStreamController.stream;
 
   void initialize(String name, String ip, int requestPort) {
+    Logger().info('Initialized as $name with ip $ip and requestPort $requestPort', 'DeviceManager');
+
     _currentDeviceInfo = DeviceInfo(
       name: name,
       ip: ip,
@@ -26,6 +29,8 @@ class DeviceManager {
   }
 
   void updateDeviceInfo({String? name, String? ip, int? requestPort}) {
+    Logger().info('Updated as $name with ip $ip and requestPort $requestPort', 'DeviceManager');
+
     _currentDeviceInfo = DeviceInfo(
       name: name ?? _currentDeviceInfo.name,
       ip: ip ?? _currentDeviceInfo.ip,

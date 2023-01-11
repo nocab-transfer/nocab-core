@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:typed_data';
 
+import 'package:nocab_logger/nocab_logger.dart';
 import 'package:nocab_core/nocab_core.dart';
 import 'package:nocab_core/src/transfer/data_handler.dart';
 import 'package:nocab_core/src/transfer/transfer_event_model.dart';
@@ -34,10 +35,15 @@ class Sender extends Transfer {
     final DeviceInfo deviceInfo = args[2] as DeviceInfo;
     final int transferPort = args[3] as int;
 
+    Logger().info('_sendWorker started', 'Sender');
+
     RawServerSocket? server;
     try {
       server = await RawServerSocket.bind(InternetAddress.anyIPv4, transferPort);
+      Logger().info('_sendWorker server started', 'Sender');
     } catch (e, stackTrace) {
+      Logger().error('_sendWorker server binding error', 'Sender', error: e, stackTrace: stackTrace);
+
       sendPort.send(TransferEvent(
         TransferEventType.error,
         error: CoreError(e.toString(), className: 'Sender', methodName: '_sendWorker', stackTrace: stackTrace),
@@ -45,6 +51,7 @@ class Sender extends Transfer {
     }
 
     Future<void> send(FileInfo fileInfo, RawSocket socket) async {
+      Logger().info('_sendWorker send started for ${fileInfo.path}', 'Sender');
       try {
         final Uint8List buffer = Uint8List(1024 * 8);
         RandomAccessFile file = await File(fileInfo.path!).open();
@@ -64,6 +71,7 @@ class Sender extends Transfer {
           ));
         }
         file.closeSync();
+        Logger().info('_sendWorker file ${fileInfo.path} sent, totalWrite: $totalWrite', 'Sender');
         sendPort.send(TransferEvent(TransferEventType.fileEnd, currentFile: fileInfo));
         queue.remove(fileInfo);
       } catch (e, stackTrace) {
@@ -76,7 +84,10 @@ class Sender extends Transfer {
     }
 
     server!.listen((socket) {
+      Logger().info('_sendWorker server socket connected', 'Sender');
+
       if (socket.remoteAddress.address != deviceInfo.ip) {
+        Logger().info('Ip address does not match: ${socket.remoteAddress.address} != ${deviceInfo.ip}', 'Sender');
         socket.close();
         sendPort.send(TransferEvent(
           TransferEventType.error,
@@ -91,14 +102,18 @@ class Sender extends Transfer {
       }
 
       socket.listen((event) {
+        Logger().info('_sendWorker socket event: $event', 'Sender');
+
         switch (event) {
           case RawSocketEvent.read:
             try {
               String data = utf8.decode(socket.read()!);
               FileInfo file = queue.firstWhere((element) => element.name == data);
+              Logger().info('_sendWorker socket requested file: ${file.name}', 'Sender');
               sendPort.send(TransferEvent(TransferEventType.start, currentFile: file));
               send(file, socket);
             } catch (e, stackTrace) {
+              Logger().error('_sendWorker socket error', 'Sender', error: e, stackTrace: stackTrace);
               socket.close();
               sendPort.send(TransferEvent(
                 TransferEventType.error,
@@ -108,7 +123,10 @@ class Sender extends Transfer {
             break;
           case RawSocketEvent.closed:
           case RawSocketEvent.readClosed:
-            if (queue.isEmpty) sendPort.send(TransferEvent(TransferEventType.end));
+            if (queue.isEmpty) {
+              Logger().info('_sendWorker queue is empty sending end event', 'Sender');
+              sendPort.send(TransferEvent(TransferEventType.end));
+            }
             socket.close();
             break;
           default:

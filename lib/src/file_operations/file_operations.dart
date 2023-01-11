@@ -5,7 +5,7 @@ import 'package:nocab_core/nocab_core.dart';
 import 'package:path/path.dart';
 
 class FileOperations {
-  static tmpToFile(File file, String newPath) async {
+  static Future<void> tmpToFile(File file, String newPath) async {
     await file.copy(newPath);
     await file.delete();
   }

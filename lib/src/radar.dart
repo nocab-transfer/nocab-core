@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:nocab_core/nocab_core.dart';
+import 'package:nocab_logger/nocab_logger.dart';
 
 class Radar {
   static final Radar _singleton = Radar._internal();
@@ -18,23 +19,31 @@ class Radar {
   ServerSocket? radarSocket;
 
   Future<void> start({int radarPort = 62193, Function(CoreError)? onError}) async {
+    Logger().info('Started on port $radarPort', 'Radar');
+
     try {
       radarSocket = await ServerSocket.bind(InternetAddress.anyIPv4, radarPort);
+      Logger().info('Succesfully binded to port $radarPort', 'Radar');
 
       radarSocket?.listen((socket) {
+        Logger().info('Received connection from ${socket.remoteAddress.address} writing current deviceInfo', 'Radar');
         socket.write(base64.encode(utf8.encode(json.encode(DeviceManager().currentDeviceInfo.toJson()))));
       });
     } catch (e, stackTrace) {
+      Logger().error('failed to start on port $radarPort', 'Radar', error: e, stackTrace: stackTrace);
       onError?.call(CoreError(e.toString(), className: "Radar", methodName: "start", stackTrace: stackTrace));
     }
   }
 
   void stop() {
+    Logger().info('Stopped', 'Radar');
     _deviceController.close();
     radarSocket?.close();
   }
 
   static Stream<List<DeviceInfo>> searchForDevices(int radarPort, {String? baseIp, bool skipCurrentDevice = true}) async* {
+    Logger().info('Searching for devices on port $radarPort', 'Radar');
+
     List<DeviceInfo> devices = [];
     baseIp ??= DeviceManager().currentDeviceInfo.ip.split('.').sublist(0, 3).join('.');
     Socket? socket;

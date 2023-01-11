@@ -3,6 +3,7 @@ import 'dart:isolate';
 
 import 'package:nocab_core/nocab_core.dart';
 import 'package:nocab_core/src/transfer/transfer_event_model.dart';
+import 'package:nocab_logger/nocab_logger.dart';
 
 class DataHandler {
   final _eventController = StreamController<Report>.broadcast();
@@ -37,6 +38,7 @@ class DataHandler {
     List transferArgs = args[2]; // This is the arguments that we will pass to the isolate
 
     ReceivePort handledReceiverPort = ReceivePort(); // This is the port that we will track data from
+
     var workerIsolate =
         await Isolate.spawn(mainTransferFunc, [handledReceiverPort.sendPort, ...transferArgs]); // arg 0 should be reserved for the port
 
@@ -57,6 +59,7 @@ class DataHandler {
       if (writtenBytes / stopwatch.elapsedMilliseconds * 1000 == 0) {
         timeoutIndicatorMilliseconds += sendDuration.inMilliseconds;
         if (timeoutIndicatorMilliseconds >= 30000) {
+          Logger().error("Transfer timed out after 30 seconds of 0 speed", "DataHandler");
           sendPort.send(ErrorReport(
             error: CoreError(
               'Transfer timed out',
@@ -98,6 +101,7 @@ class DataHandler {
       data as TransferEvent;
       switch (data.type) {
         case TransferEventType.start:
+          Logger().info('Received start event resetting stopwatch', 'DataHandler');
           stopwatch.reset();
           stopwatch.start();
           writtenBytes = 0;
@@ -109,18 +113,21 @@ class DataHandler {
           currentFile = data.currentFile;
           break;
         case TransferEventType.fileEnd:
+          Logger().info('Received fileEnd event resetting stopwatch', 'DataHandler');
           stopwatch.stop();
           stopwatch.reset();
           sendPort.send(FileEndReport(fileInfo: data.currentFile!));
           filesTransferred.add(data.currentFile!);
           break;
         case TransferEventType.end:
+          Logger().info('DataHandler _handleData received end event killing isolates', 'DataHandler');
           stopwatch.stop();
           sendPort.send(EndReport(endTime: DateTime.now()));
           workerIsolate.kill();
           Isolate.current.kill();
           break;
         case TransferEventType.error:
+          Logger().error('DataHandler _handleData received error event killing isolates', 'DataHandler', error: data.error!.message);
           stopwatch.stop();
           sendPort.send(ErrorReport(error: data.error!));
           workerIsolate.kill();
