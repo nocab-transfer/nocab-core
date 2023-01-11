@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:nocab_core/nocab_core.dart';
-import 'package:nocab_logger/nocab_logger.dart';
 
 class RequestListener {
   static final RequestListener _singleton = RequestListener._internal();

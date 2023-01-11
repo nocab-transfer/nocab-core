@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:nocab_core/nocab_core.dart';
-import 'package:nocab_logger/nocab_logger.dart';
 import 'package:path/path.dart';
 
 extension Responder on ShareRequest {

@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:nocab_core/nocab_core.dart';
-import 'package:nocab_logger/nocab_logger.dart';
 
 class DeviceManager {
   static final DeviceManager _singleton = DeviceManager._internal();
