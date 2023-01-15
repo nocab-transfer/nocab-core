@@ -30,7 +30,7 @@ class Radar {
       });
     } catch (e, stackTrace) {
       Logger().error('failed to start on port $radarPort', 'Radar', error: e, stackTrace: stackTrace);
-      onError?.call(CoreError(e.toString(), className: "Radar", methodName: "start", stackTrace: stackTrace));
+      onError?.call(CoreError('Failed to start on port $radarPort', className: "Radar", methodName: "start", stackTrace: stackTrace, error: e));
     }
   }
 

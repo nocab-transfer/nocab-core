@@ -25,7 +25,7 @@ class RequestListener {
       Logger().info("Listening on ${serverSocket!.address.address}:${serverSocket!.port}", "RequestListener");
     } catch (e, stackTrace) {
       Logger().error("Socket binding error", "RequestListener", error: e, stackTrace: stackTrace);
-      onError?.call(CoreError(e.toString(), className: "RequestListener", methodName: "start", stackTrace: stackTrace));
+      onError?.call(CoreError("Socket binding error", className: "RequestListener", methodName: "start", stackTrace: stackTrace, error: e));
     }
 
     serverSocket?.listen((socket) {
@@ -39,7 +39,7 @@ class RequestListener {
           return;
         }
       } catch (e, stackTrace) {
-        onError?.call(CoreError(e.toString(), className: "RequestListener", methodName: "start", stackTrace: stackTrace));
+        onError?.call(CoreError("Socket error", className: "RequestListener", methodName: "start", stackTrace: stackTrace, error: e));
         Logger().error("Socket error", "RequestListener", error: e, stackTrace: stackTrace);
         socket.close();
       }
@@ -63,7 +63,8 @@ class RequestListener {
             _requestHandler(activeRequest!, socket);
           } catch (e, stackTrace) {
             Logger().error("Socket error while parsing request", "RequestListener", error: e, stackTrace: stackTrace);
-            onError?.call(CoreError(e.toString(), className: "RequestListener", methodName: "start", stackTrace: stackTrace));
+            onError?.call(
+                CoreError("Socket error while parsing request", className: "RequestListener", methodName: "start", stackTrace: stackTrace, error: e));
             socket.close();
           }
         },

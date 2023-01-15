@@ -46,7 +46,8 @@ class RequestMaker {
     } catch (e, stackTrace) {
       Logger().error("Cannot request to ${request.deviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})", "RequestMaker",
           error: e, stackTrace: stackTrace);
-      onError?.call(CoreError(e.toString(), className: "RequestMaker", methodName: "requestTo", stackTrace: stackTrace));
+      onError?.call(CoreError("Cannot request to ${request.deviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})",
+          className: "RequestMaker", methodName: "requestTo", stackTrace: stackTrace, error: e));
       return;
     }
 
@@ -68,7 +69,8 @@ class RequestMaker {
         error: e,
         stackTrace: stackTrace,
       );
-      onError?.call(CoreError(e.toString(), className: "RequestMaker", methodName: "requestTo", stackTrace: stackTrace));
+      onError?.call(CoreError("Cannot parse response from ${request.deviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})",
+          className: "RequestMaker", methodName: "requestTo", stackTrace: stackTrace, error: e));
       return;
     }
 

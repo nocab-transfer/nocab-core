@@ -126,7 +126,7 @@ class DataHandler {
           Isolate.current.kill();
           break;
         case TransferEventType.error:
-          Logger().error('DataHandler _handleData received error event killing isolates', 'DataHandler', error: data.error!.message);
+          Logger().error('DataHandler _handleData received error event killing isolates', 'DataHandler', error: data.error!.error);
           stopwatch.stop();
           sendPort.send(ErrorReport(error: data.error!));
           workerIsolate.kill();

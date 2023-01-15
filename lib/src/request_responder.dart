@@ -45,7 +45,8 @@ extension Responder on ShareRequest {
       registerResponse(shareResponse);
     } catch (e, stackTrace) {
       Logger().error("Error while accepting request", "RequestResponder", error: e, stackTrace: stackTrace);
-      onError?.call(CoreError(e.toString(), className: "RequestResponder", methodName: "accept", stackTrace: stackTrace));
+      onError?.call(CoreError("Error while accepting request: ${e.toString()}",
+          className: "RequestResponder", methodName: "accept", stackTrace: stackTrace, error: e));
       return;
     }
   }
@@ -61,7 +62,8 @@ extension Responder on ShareRequest {
       registerResponse(shareResponse);
     } catch (e, stackTrace) {
       Logger().error("Error while rejecting request", "RequestResponder", error: e, stackTrace: stackTrace);
-      onError?.call(CoreError(e.toString(), className: "RequestResponder", methodName: "reject", stackTrace: stackTrace));
+      onError?.call(CoreError("Error while rejecting request: ${e.toString()}",
+          className: "RequestResponder", methodName: "reject", stackTrace: stackTrace, error: e));
     }
   }
 }

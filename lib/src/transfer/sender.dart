@@ -45,7 +45,7 @@ class Sender extends Transfer {
 
       sendPort.send(TransferEvent(
         TransferEventType.error,
-        error: CoreError(e.toString(), className: 'Sender', methodName: '_sendWorker', stackTrace: stackTrace),
+        error: CoreError("Can't bind to port $transferPort", className: 'Sender', methodName: '_sendWorker', stackTrace: stackTrace, error: e),
       ));
     }
 
@@ -77,7 +77,7 @@ class Sender extends Transfer {
         socket.close();
         sendPort.send(TransferEvent(
           TransferEventType.error,
-          error: CoreError(e.toString(), className: 'Sender', methodName: '_sendWorker', stackTrace: stackTrace),
+          error: CoreError("Can't send file ${fileInfo.path}", className: 'Sender', methodName: '_sendWorker', stackTrace: stackTrace, error: e),
         ));
       }
     }
@@ -116,7 +116,7 @@ class Sender extends Transfer {
               socket.close();
               sendPort.send(TransferEvent(
                 TransferEventType.error,
-                error: CoreError(e.toString(), className: 'Sender', methodName: '_sendWorker', stackTrace: stackTrace),
+                error: CoreError("Error while reading socket", className: 'Sender', methodName: '_sendWorker', stackTrace: stackTrace, error: e),
               ));
             }
             break;

@@ -67,7 +67,7 @@ class Receiver extends Transfer {
         sendPort.send(
           TransferEvent(
             TransferEventType.error,
-            error: CoreError(e.toString(), className: "Receiver", methodName: "_receiveWorker", stackTrace: stackTrace),
+            error: CoreError("tempFile cannot create", className: "Receiver", methodName: "_receiveWorker", stackTrace: stackTrace, error: e),
           ),
         );
       }
@@ -102,7 +102,8 @@ class Receiver extends Transfer {
               sendPort.send(
                 TransferEvent(
                   TransferEventType.error,
-                  error: CoreError(e.toString(), className: "Receiver", methodName: "_receiveWorker", stackTrace: stackTrace),
+                  error: CoreError("Socket cannot read on ${currentFile.name}",
+                      className: "Receiver", methodName: "_receiveWorker", stackTrace: stackTrace, error: e),
                 ),
               );
             }
@@ -125,10 +126,11 @@ class Receiver extends Transfer {
                   TransferEvent(
                     TransferEventType.error,
                     error: CoreError(
-                      e.toString(),
+                      "File cannot move to ${currentFile.path} from ${tempFile.path}",
                       className: "Receiver",
                       methodName: "_receiveWorker",
                       stackTrace: stackTrace,
+                      error: e,
                     ),
                   ),
                 );
