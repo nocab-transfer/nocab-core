@@ -16,7 +16,7 @@ class RequestListener {
 
   ServerSocket? serverSocket;
 
-  ShareRequest? activeRequest;
+  ShareRequest? latestRequest;
   Future<void> start({Function(CoreError)? onError}) async {
     Logger().info("Starting listening", "RequestListener");
 
@@ -30,7 +30,7 @@ class RequestListener {
 
     serverSocket?.listen((socket) {
       try {
-        if (activeRequest != null) {
+        if (latestRequest?.isResponded == false) {
           Logger().info(
               "${socket.remoteAddress.address}:${socket.remotePort} has been rejected because another request is in progress", "RequestListener");
           var shareResponse = ShareResponse(response: false, info: "Another request is in progress");
@@ -48,19 +48,18 @@ class RequestListener {
         (event) {
           try {
             String data = utf8.decode(base64.decode(utf8.decode(event)));
-            activeRequest = ShareRequest.fromJson(jsonDecode(data));
-            activeRequest!.socket = socket;
+            latestRequest = ShareRequest.fromJson(jsonDecode(data));
+            latestRequest!.socket = socket;
 
             socket.done.then((value) {
-              if (activeRequest?.isResponded == false) {
-                activeRequest!.registerResponse(ShareResponse(response: false, info: "Connection lost"));
+              if (latestRequest?.isResponded == false) {
+                latestRequest!.registerResponse(ShareResponse(response: false, info: "Connection lost"));
                 Logger().info(
                     "${socket.remoteAddress.address}:${socket.remotePort} has been automatically rejected because the connection has been lost",
                     "RequestListener");
               }
-              activeRequest = null;
             });
-            _requestHandler(activeRequest!, socket);
+            _requestHandler(latestRequest!, socket);
           } catch (e, stackTrace) {
             Logger().error("Socket error while parsing request", "RequestListener", error: e, stackTrace: stackTrace);
             onError?.call(
