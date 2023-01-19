@@ -7,6 +7,8 @@ import 'package:uuid/uuid.dart';
 
 void main() {
   test('Transfer Test', () async {
+    await Logger.downloadIsarCore();
+
     var receiverDeviceInfo = DeviceInfo(name: "Receiver", ip: "127.0.0.1", requestPort: 5001, opsystem: Platform.operatingSystemVersion);
     var senderDeviceInfo = DeviceInfo(name: "Sender", ip: "127.0.0.1", requestPort: 5001, opsystem: Platform.operatingSystemVersion);
     File file = File(p.join("test", "_testFile"));

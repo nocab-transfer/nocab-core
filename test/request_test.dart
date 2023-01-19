@@ -7,6 +7,8 @@ void main() {
   test(
     'Request Test',
     () async {
+      await Logger.downloadIsarCore();
+
       DeviceManager().initialize("Sender", "127.0.0.1", 5001);
       await RequestListener().start(onError: (p0) => throw p0);
 
