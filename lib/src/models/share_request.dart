@@ -11,6 +11,7 @@ class ShareRequest {
   late DeviceInfo deviceInfo;
   late int transferPort;
   late String transferUuid;
+  String? coreVersion;
 
   late Socket socket; // for response
   Transfer? linkedTransfer;
@@ -24,13 +25,14 @@ class ShareRequest {
     _completer.complete(response);
   }
 
-  ShareRequest({required this.files, required this.deviceInfo, required this.transferPort, required this.transferUuid});
+  ShareRequest({required this.files, required this.deviceInfo, required this.transferPort, required this.transferUuid, required this.coreVersion});
 
   ShareRequest.fromJson(Map<String, dynamic> json) {
     files = List<FileInfo>.from(json['files'].map((x) => FileInfo.fromJson(x)));
     deviceInfo = DeviceInfo.fromJson(json['deviceInfo']);
     transferPort = json['transferPort'];
     transferUuid = json['transferUuid'];
+    coreVersion = json['coreVersion'];
   }
 
   Map<String, dynamic> toJson() {
@@ -39,6 +41,7 @@ class ShareRequest {
     map['deviceInfo'] = deviceInfo.toJson();
     map['transferPort'] = transferPort;
     map['transferUuid'] = transferUuid;
+    map['coreVersion'] = coreVersion;
     return map;
   }
 }

@@ -21,3 +21,7 @@ export 'src/transfer/sender.dart';
 export 'src/transfer/receiver.dart';
 
 export 'package:nocab_logger/nocab_logger.dart';
+
+class NoCabCore {
+  static const String version = '1.0.0';
+}

@@ -31,6 +31,7 @@ class RequestMaker {
       files: fileInfos,
       transferPort: transferPort,
       transferUuid: Uuid().v4(),
+      coreVersion: NoCabCore.version,
     );
   }
 

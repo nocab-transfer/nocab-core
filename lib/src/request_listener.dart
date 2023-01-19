@@ -76,7 +76,42 @@ class RequestListener {
       "${request.deviceInfo.name}(${socket.remoteAddress.address}:${socket.remotePort}) has requested to share ${request.files.length} files",
       "RequestListener",
     );
+
     _requestController.add(request);
+
+    if (request.coreVersion == null) {
+      Logger().info(
+          "${request.deviceInfo.name}(${socket.remoteAddress.address}:${socket.remotePort}) has been rejected because of the core version missing",
+          "RequestListener");
+      request.reject(info: "Core version missing in the request. Can't proceed. Please update the requester app");
+      return;
+    }
+
+    if (request.coreVersion != NoCabCore.version) {
+      // find which version is older
+      var currentVersion = NoCabCore.version.split(".");
+      var requestVersion = request.coreVersion!.split(".");
+      var isCurrentVersionOlder = false;
+
+      try {
+        for (var i = 0; i < currentVersion.length; i++) {
+          if (int.parse(currentVersion[i]) < int.parse(requestVersion[i])) {
+            isCurrentVersionOlder = true;
+            break;
+          }
+        }
+
+        Logger().info(
+            "${request.deviceInfo.name}(${socket.remoteAddress.address}:${socket.remotePort}) has been rejected because of the core version mismatch",
+            "RequestListener");
+        request.reject(info: "Core version mismatch. Please update the ${isCurrentVersionOlder ? "requester" : "receiver"} app}");
+        return;
+      } catch (e, stackTrace) {
+        Logger().error("Core version parsing error", "RequestListener", error: e, stackTrace: stackTrace);
+        request.reject(info: "Core version parsing error. Can't proceed");
+        return;
+      }
+    }
   }
 
   void stop() {
