@@ -53,6 +53,7 @@ class Radar {
         Uint8List data = await socket.first.timeout(const Duration(seconds: 5));
         if (data.isNotEmpty) {
           var device = DeviceInfo.fromJson(json.decode(utf8.decode(base64.decode(utf8.decode(data)))));
+          Logger().info('Found device ${device.name} at ${device.ip}:$radarPort', 'Radar');
           devices.add(device);
           yield devices;
         }
