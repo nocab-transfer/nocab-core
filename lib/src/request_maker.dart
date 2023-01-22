@@ -42,12 +42,12 @@ class RequestMaker {
       socket = await Socket.connect(receiverDeviceInfo.ip, receiverDeviceInfo.requestPort);
       socket.write(base64.encode(utf8.encode(json.encode(request.toJson()))));
       Logger().info(
-          "Request sent to ${request.deviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort}) with ${request.files.length} files",
+          "Request sent to ${receiverDeviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort}) with ${request.files.length} files",
           "RequestMaker");
     } catch (e, stackTrace) {
-      Logger().error("Cannot request to ${request.deviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})", "RequestMaker",
+      Logger().error("Cannot request to ${receiverDeviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})", "RequestMaker",
           error: e, stackTrace: stackTrace);
-      onError?.call(CoreError("Cannot request to ${request.deviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})",
+      onError?.call(CoreError("Cannot request to ${receiverDeviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})",
           className: "RequestMaker", methodName: "requestTo", stackTrace: stackTrace, error: e));
       return;
     }
@@ -65,25 +65,27 @@ class RequestMaker {
       );
     } catch (e, stackTrace) {
       Logger().error(
-        "Cannot parse response from ${request.deviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})",
+        "Cannot parse response from ${receiverDeviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})",
         "RequestMaker",
         error: e,
         stackTrace: stackTrace,
       );
-      onError?.call(CoreError("Cannot parse response from ${request.deviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})",
+      onError?.call(CoreError("Cannot parse response from ${receiverDeviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})",
           className: "RequestMaker", methodName: "requestTo", stackTrace: stackTrace, error: e));
       return;
     }
 
     if (!shareResponse.response) {
       request.registerResponse(shareResponse);
-      Logger().info("Request rejected by ${request.deviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})", "RequestMaker");
+      Logger().info(
+          "Request rejected by ${receiverDeviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort}), reason: ${shareResponse.info}",
+          "RequestMaker");
       return;
     }
 
-    Logger().info("Request accepted by ${request.deviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})", "RequestMaker");
+    Logger().info("Request accepted by ${receiverDeviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})", "RequestMaker");
 
-    Logger().info("Starting transfer to ${request.deviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})", "RequestMaker");
+    Logger().info("Starting transfer to ${receiverDeviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})", "RequestMaker");
     request.linkedTransfer = Sender(
       deviceInfo: receiverDeviceInfo,
       files: request.files,
