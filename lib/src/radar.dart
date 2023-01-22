@@ -47,14 +47,12 @@ class Radar {
     baseIp ??= DeviceManager().currentDeviceInfo.ip.split('.').sublist(0, 3).join('.');
     Socket? socket;
     for (int i = 1; i < 255; i++) {
+      if (skipCurrentDevice && i == int.parse(DeviceManager().currentDeviceInfo.ip.split('.').last)) continue;
       try {
         socket = await Socket.connect('$baseIp.$i', radarPort, timeout: const Duration(milliseconds: 10));
         Uint8List data = await socket.first.timeout(const Duration(seconds: 5));
         if (data.isNotEmpty) {
           var device = DeviceInfo.fromJson(json.decode(utf8.decode(base64.decode(utf8.decode(data)))));
-          if (skipCurrentDevice &&
-              device.ip == DeviceManager().currentDeviceInfo.ip &&
-              device.requestPort == DeviceManager().currentDeviceInfo.requestPort) continue;
           devices.add(device);
           yield devices;
         }
