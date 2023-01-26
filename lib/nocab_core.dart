@@ -36,4 +36,7 @@ class NoCabCore {
   static Stream<void> get onLogged => Logger().onLogged;
 
   static Future<void> exportLogsLast10Days(File file) async => await Logger().exportLogsLast10Days(file);
+
+  static Future<void> deleteLogs({DateTime? from, DateTime? to, LogType? logType}) async =>
+      await Logger().deleteLogs(from: from, to: to, logType: logType);
 }
