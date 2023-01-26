@@ -4,7 +4,7 @@ The core library for the NoCab Transfer, built with pure Dart and responsible fo
 
 ## Requirements
 
-- Dart 3.0.0-71.0.dev or higher
+- Dart 2.19.0 or higher
 
 ## Features
 
