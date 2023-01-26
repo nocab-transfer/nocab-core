@@ -18,3 +18,5 @@ jobs:
         with:
           line-length: 150
           fail-on-warnings: true
+      - name: Run tests
+        run: dart test -j 1
