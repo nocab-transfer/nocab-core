@@ -8,6 +8,6 @@ part 'error_report.dart';
 part 'fileend_report.dart';
 part 'start_report.dart';
 
-abstract class Report {
+sealed class Report {
   Report();
 }

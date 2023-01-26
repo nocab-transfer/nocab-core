@@ -1,11 +1,4 @@
-import 'dart:convert';
-import 'dart:io';
-import 'dart:isolate';
-import 'dart:typed_data';
-
-import 'package:nocab_core/nocab_core.dart';
-import 'package:nocab_core/src/transfer/data_handler.dart';
-import 'package:nocab_core/src/transfer/transfer_event_model.dart';
+part of 'transfer.dart';
 
 class Sender extends Transfer {
   Sender({required super.deviceInfo, required super.files, required super.transferPort, required super.uuid});
@@ -119,15 +112,12 @@ class Sender extends Transfer {
                 error: CoreError("Error while reading socket", className: 'Sender', methodName: '_sendWorker', stackTrace: stackTrace, error: e),
               ));
             }
-            break;
-          case RawSocketEvent.closed:
-          case RawSocketEvent.readClosed:
-            if (queue.isEmpty) {
-              Logger().info('_sendWorker queue is empty sending end event', 'Sender');
-              sendPort.send(TransferEvent(TransferEventType.end));
-            }
+          case RawSocketEvent.closed || RawSocketEvent.readClosed when queue.isEmpty:
+            Logger().info('_sendWorker queue is empty sending end event', 'Sender');
+            sendPort.send(TransferEvent(TransferEventType.end));
             socket.close();
-            break;
+          case RawSocketEvent.closed || RawSocketEvent.read:
+            socket.close();
           default:
             break;
         }

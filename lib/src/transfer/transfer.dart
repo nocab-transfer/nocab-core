@@ -1,11 +1,20 @@
+library transfer;
+
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+import 'dart:isolate';
+import 'dart:typed_data';
 
-import 'package:nocab_core/src/models/device_info.dart';
-import 'package:nocab_core/src/models/file_info.dart';
+import 'package:nocab_core/nocab_core.dart';
 import 'package:nocab_core/src/transfer/data_handler.dart';
-import 'package:nocab_core/src/transfer/report_models/base_report.dart';
+import 'package:nocab_core/src/transfer/transfer_event_model.dart';
+import 'package:path/path.dart';
 
-abstract class Transfer {
+part 'receiver.dart';
+part 'sender.dart';
+
+sealed class Transfer {
   DeviceInfo deviceInfo;
   List<FileInfo> files;
   int transferPort;
@@ -17,7 +26,5 @@ abstract class Transfer {
 
   Transfer({required this.deviceInfo, required this.files, required this.transferPort, required this.uuid});
 
-  Future<void> start() async {
-    throw UnimplementedError("Transfer start() is not implemented");
-  }
+  Future<void> start();
 }

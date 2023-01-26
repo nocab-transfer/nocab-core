@@ -23,6 +23,11 @@ include: package:lints/recommended.yaml
 #   exclude:
 #     - path/to/excluded/files/**
 
+analyzer:
+  enable-experiment:
+    - sealed-class
+    - patterns
+
 # For more information about the core and recommended set of lints, see
 # https://dart.dev/go/core-lints
 

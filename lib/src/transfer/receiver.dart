@@ -1,12 +1,4 @@
-import 'dart:convert';
-import 'dart:io';
-import 'dart:isolate';
-import 'dart:typed_data';
-
-import 'package:nocab_core/nocab_core.dart';
-import 'package:nocab_core/src/transfer/data_handler.dart';
-import 'package:nocab_core/src/transfer/transfer_event_model.dart';
-import 'package:path/path.dart';
+part of 'transfer.dart';
 
 class Receiver extends Transfer {
   Directory tempFolder;
