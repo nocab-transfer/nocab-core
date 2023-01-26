@@ -20,8 +20,15 @@ The core library for the NoCab Transfer, built with pure Dart and responsible fo
     git:
       url: https://github.com/nocab-transfer/nocab-core.git
 ```
+2. For flutter projects, add isar_flutter_libs to your pubspec.yaml
 
-2. Import the library in your project with import 'package:nocab_core/nocab_core.dart';
+> **Note**: Check the latest version of isar_flutter_libs from [here](https://pub.dev/packages/isar_flutter_libs)
+```yaml
+  isar_flutter_libs: <latest_version>
+```
+
+3. Import the library in your project with import 'package:nocab_core/nocab_core.dart';
+
 
 ## Example
 
@@ -32,6 +39,10 @@ import 'package:nocab_core/nocab_core.dart';
 import 'dart:async';
 
 Future<void> main() async {
+  // If you are non-Flutter project, you should initialize the isar libraries manually
+  // Don't need to do this if you are using Flutter. (Instead, you should add isar_flutter_libs to your pubspec.yaml)
+  await NoCabCore.downloadIsarCore();
+
   // Device manager should be initialized with the device name and the device IP address and request port
   // The request port is the port that the device will listen to for incoming requests
   // Manager should be initialized before transfer or request
@@ -68,6 +79,10 @@ import 'package:nocab_core/nocab_core.dart';
 import 'dart:io';
 
 Future<void> main() async {
+  // If you are non-Flutter project, you should initialize the isar libraries manually
+  // Don't need to do this if you are using Flutter. (Instead, you should add isar_flutter_libs to your pubspec.yaml)
+  await NoCabCore.downloadIsarCore();
+
   // Device manager should be initialized with the device name and the device IP address and request port
   // The request port is the port that the device will listen to for incoming requests
   // Manager should be initialized before transfer or request
@@ -135,6 +150,10 @@ import 'package:nocab_core/nocab_core.dart';
 import 'dart:io';
 
 Future<void> main() async {
+  // If you are non-Flutter project, you should initialize the isar libraries manually
+  // Don't need to do this if you are using Flutter. (Instead, you should add isar_flutter_libs to your pubspec.yaml)
+  await NoCabCore.downloadIsarCore();
+
   // Device manager should be initialized with the device name and the device IP address and request port
   // The request port is the port that the device will listen to for incoming requests
   // Manager should be initialized before transfer or request

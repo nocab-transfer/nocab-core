@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'package:nocab_core/nocab_core.dart';
 import 'package:nocab_core/src/transfer/data_handler.dart';
 import 'package:nocab_core/src/transfer/transfer_event_model.dart';
+import 'package:nocab_logger/nocab_logger.dart';
 
 class Sender extends Transfer {
   Sender({required super.deviceInfo, required super.files, required super.transferPort, required super.uuid});

@@ -4,6 +4,7 @@ import 'package:nocab_core/nocab_core.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 import 'package:uuid/uuid.dart';
+import 'package:nocab_logger/nocab_logger.dart';
 
 void main() {
   test('Transfer Test', () async {

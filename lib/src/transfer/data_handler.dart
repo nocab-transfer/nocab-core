@@ -3,6 +3,7 @@ import 'dart:isolate';
 
 import 'package:nocab_core/nocab_core.dart';
 import 'package:nocab_core/src/transfer/transfer_event_model.dart';
+import 'package:nocab_logger/nocab_logger.dart';
 
 class DataHandler {
   final _eventController = StreamController<Report>.broadcast();

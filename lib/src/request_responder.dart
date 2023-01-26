@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:nocab_core/nocab_core.dart';
 import 'package:path/path.dart';
+import 'package:nocab_logger/nocab_logger.dart';
 
 extension Responder on ShareRequest {
   Future<void> accept({Function(CoreError)? onError, required Directory downloadDirectory, required Directory tempDirectory}) async {
