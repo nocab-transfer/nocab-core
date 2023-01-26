@@ -1,5 +1,6 @@
 import 'package:nocab_core/nocab_core.dart';
 import 'package:test/test.dart';
+import 'package:nocab_logger/nocab_logger.dart';
 
 void main() {
   test('Radar Test', () async {

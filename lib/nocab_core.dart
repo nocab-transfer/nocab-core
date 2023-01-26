@@ -1,5 +1,9 @@
 library nocab_core;
 
+import 'dart:io';
+
+import 'package:nocab_logger/nocab_logger.dart';
+
 export 'src/device_manager.dart';
 export 'src/request_listener.dart';
 export 'src/request_maker.dart';
@@ -20,8 +24,16 @@ export 'src/transfer/transfer.dart';
 export 'src/transfer/sender.dart';
 export 'src/transfer/receiver.dart';
 
-export 'package:nocab_logger/nocab_logger.dart';
-
 class NoCabCore {
   static const String version = '1.0.0';
+
+  /// Only use this method for non-Flutter code or unit tests.
+  static Future<void> downloadIsarCore() async => await Logger.downloadIsarCore();
+
+  static Future<List<Log>> getLogs({DateTime? from, DateTime? to, LogType? logType}) async =>
+      await Logger().get(from: from, to: to, logType: logType);
+
+  static Stream<void> get onLogged => Logger().onLogged;
+
+  static Future<void> exportLogsLast10Days(File file) async => await Logger().exportLogsLast10Days(file);
 }

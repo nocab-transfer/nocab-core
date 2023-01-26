@@ -7,6 +7,7 @@ import 'package:nocab_core/nocab_core.dart';
 import 'package:nocab_core/src/transfer/data_handler.dart';
 import 'package:nocab_core/src/transfer/transfer_event_model.dart';
 import 'package:path/path.dart';
+import 'package:nocab_logger/nocab_logger.dart';
 
 class Receiver extends Transfer {
   Directory tempFolder;

@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:nocab_core/nocab_core.dart';
 import 'package:uuid/uuid.dart';
+import 'package:nocab_logger/nocab_logger.dart';
 
 class RequestMaker {
   /// Creates a [ShareRequest] object.
