@@ -121,13 +121,15 @@ class Sender extends Transfer {
               ));
             }
             break;
-          case RawSocketEvent.closed:
           case RawSocketEvent.readClosed:
+            socket.close();
+            break;
+          case RawSocketEvent.closed:
             if (queue.isEmpty) {
               Logger().info('_sendWorker queue is empty sending end event', 'Sender');
+              server?.close();
               sendPort.send(TransferEvent(TransferEventType.end));
             }
-            socket.close();
             break;
           default:
             break;
