@@ -26,8 +26,14 @@ class Radar {
       Logger().info('Succesfully binded to port $radarPort', 'Radar');
 
       radarSocket?.listen((socket) {
-        Logger().info('Received connection from ${socket.remoteAddress.address} writing current deviceInfo', 'Radar');
-        socket.write(base64.encode(utf8.encode(json.encode(DeviceManager().currentDeviceInfo.toJson()))));
+        Logger().info('Received connection from ${socket.remoteAddress.address} trying to write current deviceInfo', 'Radar');
+        try {
+          socket.write(base64.encode(utf8.encode(json.encode(DeviceManager().currentDeviceInfo.toJson()))));
+        } catch (e) {
+          Logger().error('Failed to write current deviceInfo', 'Radar', error: e);
+        } finally {
+          socket.close();
+        }
       });
     } catch (e, stackTrace) {
       Logger().error('failed to start on port $radarPort', 'Radar', error: e, stackTrace: stackTrace);
@@ -50,10 +56,11 @@ class Radar {
     for (int i = 1; i < 255; i++) {
       if (skipCurrentDevice && i == int.parse(DeviceManager().currentDeviceInfo.ip.split('.').last)) continue;
       try {
-        socket = await Socket.connect('$baseIp.$i', radarPort, timeout: const Duration(milliseconds: 10));
+        socket = await Socket.connect('$baseIp.$i', radarPort, timeout: const Duration(milliseconds: 15));
         Uint8List data = await socket.first.timeout(const Duration(seconds: 5));
         if (data.isNotEmpty) {
           var device = DeviceInfo.fromJson(json.decode(utf8.decode(base64.decode(utf8.decode(data)))));
+          if (devices.any((element) => element.ip == device.ip)) continue;
           Logger().info('Found device ${device.name} at ${device.ip}:$radarPort', 'Radar');
           devices.add(device);
           yield devices;
