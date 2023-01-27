@@ -15,9 +15,19 @@ class DataHandler {
   ) {
     ReceivePort dataHandlerPort = ReceivePort();
 
-    // Listen for data from the isolate
     Isolate.spawn(_handleData, [mainTransferFunc, dataHandlerPort.sendPort, transferArgs]);
+
+    // Listen for data from the isolate
     dataHandlerPort.listen((data) {
+      // If the stream is closed, return and log
+      if (_eventController.isClosed) {
+        Logger().warning(
+          "Stream is closed. This should not happen.",
+          "DataHandler(mainIsolate:$mainTransferFunc)",
+        );
+        return;
+      }
+
       _eventController.add(data); // Add the data to the stream
 
       // If transfer is complete or failed, close the stream
@@ -25,8 +35,16 @@ class DataHandler {
         case EndReport:
         case ErrorReport:
           _eventController.close();
+          dataHandlerPort.close();
           break;
         default:
+          if (data is! Report) {
+            // If the data is not a Report, log it
+            Logger().warning(
+              "${data.runtimeType} is not a Report. This should not happen.",
+              "DataHandler(mainIsolate:$mainTransferFunc)",
+            );
+          }
           break;
       }
     });
