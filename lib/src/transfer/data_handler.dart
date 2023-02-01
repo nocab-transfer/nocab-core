@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:isolate';
 
 import 'package:nocab_core/nocab_core.dart';
+import 'package:nocab_core/src/transfer/transfer_controller.dart';
 import 'package:nocab_core/src/transfer/transfer_event_model.dart';
 import 'package:nocab_logger/nocab_logger.dart';
 
@@ -9,17 +10,26 @@ class DataHandler {
   final _eventController = StreamController<Report>.broadcast();
   Stream<Report> get onEvent => _eventController.stream;
 
-  DataHandler(
-    void Function(List args) mainTransferFunc, // This is the transfer that we will track data from
-    List transferArgs, // This is the arguments that we will pass to the isolate
-  ) {
+  SendPort? mainToDataHandlerControlPort;
+
+  final void Function(List args) mainTransferFunc; // This is the transfer that we will track data from
+  final List transferArgs; // This is the arguments that we will pass to the isolate
+  final TransferController transferController; // For reporting errors on other side
+
+  DataHandler(this.mainTransferFunc, this.transferArgs, this.transferController) {
     ReceivePort dataHandlerPort = ReceivePort();
 
     Isolate.spawn(_handleData, [mainTransferFunc, dataHandlerPort.sendPort, transferArgs]);
 
     // Listen for data from the isolate
     dataHandlerPort.listen((data) {
+      if (data is SendPort) {
+        mainToDataHandlerControlPort = data;
+        return;
+      }
+
       // If the stream is closed, return and log
+      // Can happen if the isolate is not closed properly
       if (_eventController.isClosed) {
         Logger().warning(
           "Stream is closed. This should not happen.",
@@ -28,26 +38,36 @@ class DataHandler {
         return;
       }
 
-      _eventController.add(data); // Add the data to the stream
+      if (data is Report) _eventController.add(data); // Add the data to the stream
 
       // If transfer is complete or failed, close the stream
       switch (data.runtimeType) {
         case EndReport:
-        case ErrorReport:
+        case CancelReport:
           _eventController.close();
           dataHandlerPort.close();
           break;
+        case ErrorReport:
+          _eventController.close();
+          dataHandlerPort.close();
+          transferController.cancel(isError: true, error: (data as ErrorReport).error);
+          break;
         default:
-          if (data is! Report) {
-            // If the data is not a Report, log it
-            Logger().warning(
-              "${data.runtimeType} is not a Report. This should not happen.",
-              "DataHandler(mainIsolate:$mainTransferFunc)",
-            );
-          }
           break;
       }
     });
+  }
+
+  void cancel() {
+    if (mainToDataHandlerControlPort == null) {
+      Logger().warning(
+        "mainToDataHandlerControlPort is null. This should not happen.",
+        "DataHandler(mainIsolate:$mainTransferFunc)",
+      );
+      return;
+    }
+
+    mainToDataHandlerControlPort!.send("cancel");
   }
 
   static Future<void> _handleData(List<dynamic> args) async {
@@ -57,8 +77,14 @@ class DataHandler {
 
     ReceivePort handledReceiverPort = ReceivePort(); // This is the port that we will track data from
 
-    var workerIsolate =
-        await Isolate.spawn(mainTransferFunc, [handledReceiverPort.sendPort, ...transferArgs]); // arg 0 should be reserved for the port
+    ReceivePort mainControlPort = ReceivePort(); // This is the port that we will listen for control messages from
+    sendPort.send(mainControlPort.sendPort); // Send the control port to the main isolate
+
+    var workerIsolate = await Isolate.spawn(mainTransferFunc, [
+      handledReceiverPort.sendPort, // arg 0 should be reserved for the port
+      ...transferArgs,
+    ]);
+    String isolateName = workerIsolate.debugName ?? "Unknown"; // We will use this to identify the isolate in the logs
 
     int writtenBytes = 0;
     Duration sendDuration = const Duration(milliseconds: 100);
@@ -70,14 +96,14 @@ class DataHandler {
 
     int timeoutIndicatorMilliseconds = 0;
 
-    Timer.periodic(sendDuration, (timer) {
+    Timer timer = Timer.periodic(sendDuration, (timer) {
       // If the stopwatch is not running or the elapsed time is 0, return to prevent division by 0 and false reports
       if (!stopwatch.isRunning || stopwatch.elapsedMilliseconds == 0) return;
       // timeout if the speed is 0 for 30 seconds
       if (writtenBytes / stopwatch.elapsedMilliseconds * 1000 == 0) {
         timeoutIndicatorMilliseconds += sendDuration.inMilliseconds;
         if (timeoutIndicatorMilliseconds >= 30000) {
-          Logger().error("Transfer timed out after 30 seconds of 0 speed", "DataHandler");
+          Logger().error("Transfer timed out after 30 seconds of 0 speed", "DataHandler($isolateName)");
           sendPort.send(ErrorReport(
             error: CoreError(
               'Transfer timed out',
@@ -111,6 +137,19 @@ class DataHandler {
       writtenBytes = 0; // reset written bytes
     });
 
+    mainControlPort.listen((message) async {
+      if (message == "cancel") {
+        Logger().info("Received cancel event from main isolate", "DataHandler($isolateName)");
+        workerIsolate.kill();
+        handledReceiverPort.close();
+        sendPort.send(CancelReport(cancelTime: DateTime.now()));
+        Logger().info("Sent cancel report to main isolate", "DataHandler($isolateName)");
+        mainControlPort.close();
+        timer.cancel();
+        Isolate.exit();
+      }
+    });
+
     // Send the start event to the main isolate
     sendPort.send(StartReport(startTime: DateTime.now()));
 
@@ -119,7 +158,7 @@ class DataHandler {
       data as TransferEvent;
       switch (data.type) {
         case TransferEventType.start:
-          Logger().info('Received start event resetting stopwatch', 'DataHandler');
+          Logger().info('Received start event resetting stopwatch', 'DataHandler($isolateName)');
           stopwatch.reset();
           stopwatch.start();
           writtenBytes = 0;
@@ -131,25 +170,29 @@ class DataHandler {
           currentFile = data.currentFile;
           break;
         case TransferEventType.fileEnd:
-          Logger().info('Received fileEnd event resetting stopwatch', 'DataHandler');
+          Logger().info('Received fileEnd event resetting stopwatch', 'DataHandler($isolateName)');
           stopwatch.stop();
           stopwatch.reset();
           sendPort.send(FileEndReport(fileInfo: data.currentFile!));
           filesTransferred.add(data.currentFile!);
           break;
         case TransferEventType.end:
-          Logger().info('DataHandler _handleData received end event killing isolates', 'DataHandler');
+          Logger().info('DataHandler _handleData received end event killing isolates', 'DataHandler($isolateName)');
           stopwatch.stop();
           sendPort.send(EndReport(endTime: DateTime.now()));
+          handledReceiverPort.close();
+          mainControlPort.close();
           workerIsolate.kill();
           Isolate.current.kill();
           break;
         case TransferEventType.error:
-          Logger().error('DataHandler _handleData received error event killing isolates', 'DataHandler', error: data.error!.error);
+          Logger().error('DataHandler _handleData received error event killing isolates', 'DataHandler($isolateName)', error: data.error!.error);
           stopwatch.stop();
           sendPort.send(ErrorReport(error: data.error!));
-          workerIsolate.kill();
-          Isolate.current.kill();
+          handledReceiverPort.close();
+          mainControlPort.close();
+          workerIsolate.kill(priority: Isolate.immediate);
+          Isolate.current.kill(priority: Isolate.immediate);
           break;
       }
     });

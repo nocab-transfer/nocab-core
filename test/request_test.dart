@@ -15,7 +15,7 @@ void main() {
 
       File file = File("test/_testFile");
 
-      var request = RequestMaker.create(files: [file], transferPort: 1234);
+      var request = RequestMaker.create(files: [file], transferPort: 1234, controlPort: 1235);
 
       RequestMaker.requestTo(
         DeviceInfo(name: "Listener", ip: "127.0.0.1", requestPort: 5001, opsystem: Platform.operatingSystemVersion),

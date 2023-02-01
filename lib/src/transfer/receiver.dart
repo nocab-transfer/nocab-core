@@ -10,24 +10,31 @@ import 'package:path/path.dart';
 import 'package:nocab_logger/nocab_logger.dart';
 
 class Receiver extends Transfer {
-  Directory tempFolder;
-  Receiver({required super.deviceInfo, required super.files, required super.transferPort, required this.tempFolder, required super.uuid});
+  Directory temp;
+  Receiver({
+    required super.deviceInfo,
+    required super.files,
+    required super.transferPort,
+    required super.controlPort,
+    required Directory tempFolder,
+    required super.uuid,
+  }) : temp = (Directory(tempFolder.path)..createSync(recursive: true)).createTempSync('nocabCoreTemp_');
 
   @override
   Future<void> start() async {
-    dataHandler = DataHandler(_receiveWorker, [files, deviceInfo, transferPort, tempFolder.path]);
+    dataHandler = DataHandler(_receiveWorker, [files, deviceInfo, transferPort, temp.path], transferController);
+    pipeReport(dataHandler.onEvent); // Pipe dataHandler events to this transfer
+  }
 
-    // Set ongoing to false when the transfer is done or an error occurs
-    onEvent.listen((event) {
-      switch (event.runtimeType) {
-        case EndReport:
-        case ErrorReport:
-          ongoing = false;
-          break;
-        default:
-          break;
+  @override
+  Future<void> cleanUp() async {
+    if (temp.existsSync()) {
+      try {
+        await temp.delete(recursive: true);
+      } catch (e, stackTrace) {
+        Logger().error('Receiver cleanUp error', 'Receiver', error: e, stackTrace: stackTrace);
       }
-    });
+    }
   }
 
   static Future<void> _receiveWorker(List args) async {
@@ -43,6 +50,7 @@ class Receiver extends Transfer {
     Future<void> receiveFile() async {
       RawSocket? socket;
       Logger().info('_receiveWorker trying to connect ${deviceInfo.ip}:$transferPort', 'Receiver');
+      // Try to connect to the socket. Sometimes it fails to connect, so we try again. After 30 seconds, dataHandler will cancel the transfer.
       while (socket == null) {
         try {
           socket = await RawSocket.connect(deviceInfo.ip, transferPort);
@@ -55,6 +63,8 @@ class Receiver extends Transfer {
 
       int totalRead = 0;
 
+      // nocabtmp is a temporary file that will be renamed to the original file name when the transfer is complete.
+      // we copy the file to a temporary file to avoid having a corrupted file if the transfer is interrupted.
       File tempFile = File(join(tempFolder.path, "${basename(queue.first.path!)}.nocabtmp"));
       FileInfo currentFile = queue.first;
 
@@ -73,11 +83,28 @@ class Receiver extends Transfer {
         );
       }
 
-      IOSink currentSink = tempFile.openWrite(mode: FileMode.append);
+      // Open the file to write.
+      // (For now it probably causes an error when the transfer is canceled. Sink is stays open even after the isolate is killed. So the clean up function throws an error.)
+      IOSink currentSink = tempFile.openWrite();
 
       Logger().info('_receiveWorker requesting file ${queue.first.name}', 'Receiver');
-      socket.write(utf8.encode(queue.first.name));
+      try {
+        // Send the file name to the socket. So the sender knows which file to send.
+        socket.write(utf8.encode(queue.first.name));
+      } catch (e, stackTrace) {
+        Logger().error('_receiveWorker socket cannot write on ${currentFile.name}', 'Receiver', error: e, stackTrace: stackTrace);
 
+        // If the socket cannot write, we send an error event to the dataHandler. The dataHandler will cancel the transfer.
+        sendPort.send(
+          TransferEvent(
+            TransferEventType.error,
+            error: CoreError("Socket cannot write on ${currentFile.name}",
+                className: "Receiver", methodName: "_receiveWorker", stackTrace: stackTrace, error: e),
+          ),
+        );
+      }
+
+      // Send a start event to the dataHandler. The dataHandler will start the timer.
       sendPort.send(TransferEvent(TransferEventType.start, currentFile: queue.first));
 
       Uint8List? buffer;
@@ -109,12 +136,13 @@ class Receiver extends Transfer {
               );
             }
 
+            // If the total read bytes is equal to the file size that requested from the sender, the file is received.
             if (totalRead == queue.first.byteSize) {
               Logger().info('_receiveWorker file received ${currentFile.name}', 'Receiver');
               sendPort.send(TransferEvent(TransferEventType.fileEnd, currentFile: queue.first));
 
-              queue.removeAt(0);
-              await currentSink.close();
+              queue.removeAt(0); // remove the first element from the queue (the file that was just received)
+              await currentSink.close(); // close the sink to prevent memory leaks
 
               try {
                 await FileOperations.tmpToFile(tempFile, currentFile.path!);
@@ -138,14 +166,17 @@ class Receiver extends Transfer {
                 return;
               }
 
-              socket?.close();
+              // Closing the socket will trigger the RawSocketEvent.readClosed event on sender side. So the sender will know that the transfer is complete.
+              await socket?.close();
 
               if (queue.isEmpty) {
+                // If the queue is empty, we send an end event to the dataHandler. The dataHandler will stop the timer and close the transfer.
                 Logger().info('_receiveWorker queue is empty sending end event', 'Receiver');
                 sendPort.send(TransferEvent(TransferEventType.end));
                 return;
               }
 
+              // If the queue is not empty, we call the receiveFile function again to receive the next file.
               receiveFile();
             }
             break;

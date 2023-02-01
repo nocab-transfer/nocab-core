@@ -10,6 +10,7 @@ class ShareRequest {
   late List<FileInfo> files;
   late DeviceInfo deviceInfo;
   late int transferPort;
+  late int controlPort;
   late String transferUuid;
   String? coreVersion;
 
@@ -25,12 +26,19 @@ class ShareRequest {
     _completer.complete(response);
   }
 
-  ShareRequest({required this.files, required this.deviceInfo, required this.transferPort, required this.transferUuid, required this.coreVersion});
+  ShareRequest(
+      {required this.files,
+      required this.deviceInfo,
+      required this.transferPort,
+      required this.controlPort,
+      required this.transferUuid,
+      required this.coreVersion});
 
   ShareRequest.fromJson(Map<String, dynamic> json) {
     files = List<FileInfo>.from(json['files'].map((x) => FileInfo.fromJson(x)));
     deviceInfo = DeviceInfo.fromJson(json['deviceInfo']);
     transferPort = json['transferPort'];
+    controlPort = json['controlPort'];
     transferUuid = json['transferUuid'];
     coreVersion = json['coreVersion'];
   }
@@ -40,6 +48,7 @@ class ShareRequest {
     map['files'] = List<dynamic>.from(files.map((x) => x.toJson()));
     map['deviceInfo'] = deviceInfo.toJson();
     map['transferPort'] = transferPort;
+    map['controlPort'] = controlPort;
     map['transferUuid'] = transferUuid;
     map['coreVersion'] = coreVersion;
     return map;

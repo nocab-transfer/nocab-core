@@ -28,6 +28,7 @@ extension Responder on ShareRequest {
 
       linkedTransfer = Receiver(
         transferPort: transferPort,
+        controlPort: controlPort,
         deviceInfo: deviceInfo,
         files: files,
         tempFolder: tempDirectory,

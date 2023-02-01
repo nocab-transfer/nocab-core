@@ -13,7 +13,7 @@ class RequestMaker {
   ///
   /// [transferPort] is the port that the receiver will use to connect to the sender.
   /// Can be any port that is not being used.
-  static ShareRequest create({required List<dynamic> files, required int transferPort}) {
+  static ShareRequest create({required List<dynamic> files, required int transferPort, required int controlPort}) {
     List<FileInfo> fileInfos = [];
 
     try {
@@ -31,6 +31,7 @@ class RequestMaker {
       deviceInfo: DeviceManager().currentDeviceInfo,
       files: fileInfos,
       transferPort: transferPort,
+      controlPort: controlPort,
       transferUuid: Uuid().v4(),
       coreVersion: NoCabCore.version,
     );
@@ -86,13 +87,15 @@ class RequestMaker {
 
     Logger().info("Request accepted by ${receiverDeviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})", "RequestMaker");
 
-    Logger().info("Starting transfer to ${receiverDeviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})", "RequestMaker");
     request.linkedTransfer = Sender(
       deviceInfo: receiverDeviceInfo,
       files: request.files,
       transferPort: request.transferPort,
+      controlPort: request.controlPort,
       uuid: request.transferUuid,
     );
+
+    Logger().info("Starting transfer to ${receiverDeviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})", "RequestMaker");
 
     await request.linkedTransfer!.start();
 
