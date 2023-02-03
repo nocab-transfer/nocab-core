@@ -2,14 +2,13 @@ import 'dart:io';
 
 import 'package:nocab_core/nocab_core.dart';
 import 'package:test/test.dart';
-import 'package:nocab_logger/nocab_logger.dart';
 
 void main() {
+  setUp(() => NoCabCore.init(logFolderPath: 'test'));
+
   test(
     'Request Test',
     () async {
-      await Logger.downloadIsarCore();
-
       DeviceManager().initialize("Sender", "127.0.0.1", 5001);
       await RequestListener().start(onError: (p0) => throw p0);
 
@@ -32,4 +31,6 @@ void main() {
     },
     timeout: Timeout(Duration(seconds: 5)),
   );
+
+  tearDown(() async => await NoCabCore.logger.close());
 }

@@ -1,11 +1,10 @@
 import 'package:nocab_core/nocab_core.dart';
 import 'package:test/test.dart';
-import 'package:nocab_logger/nocab_logger.dart';
 
 void main() {
-  test('Radar Test', () async {
-    await Logger.downloadIsarCore();
+  setUp(() => NoCabCore.init(logFolderPath: 'test'));
 
+  test('Radar Test', () async {
     DeviceManager().initialize("Radar", "127.0.0.1", 5001);
     await Radar().start(radarPort: 62193, onError: (p0) => throw p0);
 
@@ -22,6 +21,7 @@ void main() {
     expect(devices.map((e) => e.name), contains("Radar 2"));
 
     Radar().stop();
-    await Logger().dispose(deleteFromDisk: true);
   });
+
+  tearDown(() async => await NoCabCore.logger.close());
 }

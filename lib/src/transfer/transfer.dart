@@ -33,9 +33,9 @@ abstract class Transfer {
         case EndReport:
         case ErrorReport:
         case CancelReport:
-          _reportStreamController.close();
-          iscancelled = event is CancelReport;
           await cleanUp();
+          iscancelled = event is CancelReport;
+          _reportStreamController.close();
           break;
         default:
           break;

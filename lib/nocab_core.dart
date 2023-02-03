@@ -1,7 +1,5 @@
 library nocab_core;
 
-import 'dart:io';
-
 import 'package:nocab_logger/nocab_logger.dart';
 
 export 'src/device_manager.dart';
@@ -25,19 +23,23 @@ export 'src/transfer/sender.dart';
 export 'src/transfer/receiver.dart';
 
 class NoCabCore {
+  NoCabCore._internal();
+  static final NoCabCore _singleton = NoCabCore._internal();
+  factory NoCabCore() {
+    if (!_singleton._initialized) throw Exception('NoCabCore not initialized. Call NoCabCore.init() first.');
+    return _singleton;
+  }
+
+  bool _initialized = false;
   static const String version = '1.0.0';
 
-  /// Only use this method for non-Flutter code or unit tests.
-  static Future<void> downloadIsarCore() async => await Logger.downloadIsarCore();
+  static late final Logger logger;
+  static void init({required String logFolderPath}) {
+    _singleton._initialized = true;
+    logger = Logger('NoCabCore', storeInFile: true, logPath: logFolderPath);
+  }
 
-  static Future<List<Log>> getLogs({DateTime? from, DateTime? to, LogType? logType}) async =>
-      await Logger().get(from: from, to: to, logType: logType);
-
-  static Stream<void> get onLogged => Logger().onLogged;
-
-  static Future<void> exportToFile(File file, {DateTime? from, DateTime? to, LogType? logType}) async =>
-      await Logger().exportToFile(file, from: from, to: to, logType: logType);
-
-  static Future<void> deleteLogs({DateTime? from, DateTime? to, LogType? logType}) async =>
-      await Logger().deleteLogs(from: from, to: to, logType: logType);
+  static void dispose() {
+    logger.close();
+  }
 }

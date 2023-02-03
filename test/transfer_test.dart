@@ -4,11 +4,10 @@ import 'package:nocab_core/nocab_core.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 import 'package:uuid/uuid.dart';
-import 'package:nocab_logger/nocab_logger.dart';
 
 void main() {
   group('Transfer Test', () {
-    setUpAll(() async => await Logger.downloadIsarCore());
+    setUpAll(() => NoCabCore.init(logFolderPath: 'test'));
 
     test('Normal', () async {
       var receiverDeviceInfo = DeviceInfo(name: "Receiver", ip: "127.0.0.1", requestPort: 5001, opsystem: Platform.operatingSystemVersion);
@@ -120,7 +119,11 @@ void main() {
 
       expect(receiver.iscancelled, equals(true));
 
+      await NoCabCore.logger.close();
+
       await Directory(p.join(Directory.current.path, "test", "cancellation_test")).delete(recursive: true);
     });
+
+    //tearDownAll(() async => await NoCabCore.logger.close(deleteFile: true));
   });
 }

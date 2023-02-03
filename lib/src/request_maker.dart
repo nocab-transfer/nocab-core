@@ -4,7 +4,6 @@ import 'dart:io';
 
 import 'package:nocab_core/nocab_core.dart';
 import 'package:uuid/uuid.dart';
-import 'package:nocab_logger/nocab_logger.dart';
 
 class RequestMaker {
   /// Creates a [ShareRequest] object.
@@ -21,9 +20,9 @@ class RequestMaker {
         <FileInfo>[],
         (previousValue, element) => previousValue..add(element is File ? FileInfo.fromFile(element) : element as FileInfo),
       );
-      Logger().info("FileInfo list successfully created", "RequestMaker");
+      NoCabCore.logger.info("FileInfo list successfully created", className: "RequestMaker");
     } catch (e) {
-      Logger().error("Invalid file list. Must be a list of File or FileInfo", "RequestMaker");
+      NoCabCore.logger.error("Invalid file list. Must be a list of File or FileInfo", className: "RequestMaker");
       throw ArgumentError("Invalid file list. Must be a list of File or FileInfo");
     }
 
@@ -43,12 +42,12 @@ class RequestMaker {
     try {
       socket = await Socket.connect(receiverDeviceInfo.ip, receiverDeviceInfo.requestPort);
       socket.write(base64.encode(utf8.encode(json.encode(request.toJson()))));
-      Logger().info(
+      NoCabCore.logger.info(
           "Request sent to ${receiverDeviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort}) with ${request.files.length} files",
-          "RequestMaker");
+          className: "RequestMaker");
     } catch (e, stackTrace) {
-      Logger().error("Cannot request to ${receiverDeviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})", "RequestMaker",
-          error: e, stackTrace: stackTrace);
+      NoCabCore.logger.error("Cannot request to ${receiverDeviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})",
+          className: "RequestMaker", error: e, stackTrace: stackTrace);
       onError?.call(CoreError("Cannot request to ${receiverDeviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})",
           className: "RequestMaker", methodName: "requestTo", stackTrace: stackTrace, error: e));
       return;
@@ -60,15 +59,15 @@ class RequestMaker {
         json.decode(
           utf8.decode(base64.decode(utf8.decode(await socket.first.timeout(Duration(minutes: 2), onTimeout: () {
             socket.close();
-            Logger().error("Request timed out after 2 minutes", "RequestMaker");
+            NoCabCore.logger.error("Request timed out after 2 minutes", className: "RequestMaker");
             throw StateError("Request timed out");
           })))),
         ),
       );
     } catch (e, stackTrace) {
-      Logger().error(
+      NoCabCore.logger.error(
         "Cannot parse response from ${receiverDeviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})",
-        "RequestMaker",
+        className: "RequestMaker",
         error: e,
         stackTrace: stackTrace,
       );
@@ -79,13 +78,14 @@ class RequestMaker {
 
     if (!shareResponse.response) {
       request.registerResponse(shareResponse);
-      Logger().info(
+      NoCabCore.logger.info(
           "Request rejected by ${receiverDeviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort}), reason: ${shareResponse.info}",
-          "RequestMaker");
+          className: "RequestMaker");
       return;
     }
 
-    Logger().info("Request accepted by ${receiverDeviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})", "RequestMaker");
+    NoCabCore.logger.info("Request accepted by ${receiverDeviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})",
+        className: "RequestMaker");
 
     request.linkedTransfer = Sender(
       deviceInfo: receiverDeviceInfo,
@@ -95,7 +95,8 @@ class RequestMaker {
       uuid: request.transferUuid,
     );
 
-    Logger().info("Starting transfer to ${receiverDeviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})", "RequestMaker");
+    NoCabCore.logger.info("Starting transfer to ${receiverDeviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})",
+        className: "RequestMaker");
 
     await request.linkedTransfer!.start();
 

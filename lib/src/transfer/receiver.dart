@@ -6,8 +6,8 @@ import 'dart:typed_data';
 import 'package:nocab_core/nocab_core.dart';
 import 'package:nocab_core/src/transfer/data_handler.dart';
 import 'package:nocab_core/src/transfer/transfer_event_model.dart';
-import 'package:path/path.dart';
 import 'package:nocab_logger/nocab_logger.dart';
+import 'package:path/path.dart';
 
 class Receiver extends Transfer {
   Directory temp;
@@ -22,17 +22,26 @@ class Receiver extends Transfer {
 
   @override
   Future<void> start() async {
-    dataHandler = DataHandler(_receiveWorker, [files, deviceInfo, transferPort, temp.path], transferController);
+    dataHandler = DataHandler(_receiveWorker, [files, deviceInfo, transferPort, temp.path, NoCabCore.logger.sendPort], transferController);
     pipeReport(dataHandler.onEvent); // Pipe dataHandler events to this transfer
   }
 
   @override
   Future<void> cleanUp() async {
+    NoCabCore.logger.info('Receiver cleanUp started', className: 'Receiver');
     if (temp.existsSync()) {
-      try {
-        await temp.delete(recursive: true);
-      } catch (e, stackTrace) {
-        Logger().error('Receiver cleanUp error', 'Receiver', error: e, stackTrace: stackTrace);
+      int retryCount = 0;
+      while (retryCount < 5) {
+        try {
+          if (retryCount > 0) NoCabCore.logger.info('Receiver cleanUp retrying, (RetryCount:$retryCount)', className: 'Receiver');
+          await Future.delayed(Duration(seconds: 1));
+          temp.deleteSync(recursive: true);
+          NoCabCore.logger.info('Receiver cleanUp completed', className: 'Receiver');
+          break;
+        } catch (e, stackTrace) {
+          NoCabCore.logger.error('Receiver cleanUp error', className: 'Receiver', error: e, stackTrace: stackTrace);
+          retryCount++;
+        }
       }
     }
   }
@@ -43,21 +52,23 @@ class Receiver extends Transfer {
     final List<FileInfo> queue = args[1] as List<FileInfo>;
     final DeviceInfo deviceInfo = args[2] as DeviceInfo;
     final int transferPort = args[3] as int;
-    Directory tempFolder = Directory(args[4] as String);
+    final Directory tempFolder = Directory(args[4] as String);
+    final SendPort loggerSendPort = args[5] as SendPort;
 
-    Logger().info('_receiveWorker started', 'Receiver');
+    loggerSendPort.send(Log(LogLevel.INFO, 'Receiver _receiveWorker started', "overriden", className: 'Receiver'));
 
     Future<void> receiveFile() async {
       RawSocket? socket;
-      Logger().info('_receiveWorker trying to connect ${deviceInfo.ip}:$transferPort', 'Receiver');
+      loggerSendPort.send(Log(LogLevel.INFO, '_receiveWorker trying to connect ${deviceInfo.ip}:$transferPort', "overriden", className: 'Receiver'));
       // Try to connect to the socket. Sometimes it fails to connect, so we try again. After 30 seconds, dataHandler will cancel the transfer.
       while (socket == null) {
         try {
           socket = await RawSocket.connect(deviceInfo.ip, transferPort);
-          Logger().info('_receiveWorker socket connected', 'Receiver');
+          loggerSendPort.send(Log(LogLevel.INFO, '_receiveWorker connected to ${deviceInfo.ip}:$transferPort', "overriden", className: 'Receiver'));
         } catch (e, stackTrace) {
           await Future.delayed(const Duration(milliseconds: 100));
-          Logger().info('_receiveWorker socket cannot connect waiting 100ms', 'Receiver', error: e, stackTrace: stackTrace);
+          loggerSendPort.send(Log(LogLevel.INFO, '_receiveWorker socket cannot connect waiting 100ms', "overriden",
+              className: 'Receiver', error: e, stackTrace: stackTrace));
         }
       }
 
@@ -71,9 +82,10 @@ class Receiver extends Transfer {
       try {
         if (await tempFile.exists()) await tempFile.delete();
         await tempFile.create(recursive: true);
-        Logger().info('_receiveWorker tempFile created', 'Receiver');
+        loggerSendPort.send(Log(LogLevel.INFO, '_receiveWorker tempFile created', "overriden", className: 'Receiver'));
       } catch (e, stackTrace) {
-        Logger().error('_receiveWorker tempFile cannot create', 'Receiver', error: e, stackTrace: stackTrace);
+        loggerSendPort
+            .send(Log(LogLevel.ERROR, '_receiveWorker tempFile cannot create', "overriden", className: 'Receiver', error: e, stackTrace: stackTrace));
 
         sendPort.send(
           TransferEvent(
@@ -85,14 +97,16 @@ class Receiver extends Transfer {
 
       // Open the file to write.
       // (For now it probably causes an error when the transfer is canceled. Sink is stays open even after the isolate is killed. So the clean up function throws an error.)
+      // TODO: Find a way to close the sink when the transfer is canceled.
       IOSink currentSink = tempFile.openWrite();
 
-      Logger().info('_receiveWorker requesting file ${queue.first.name}', 'Receiver');
+      loggerSendPort.send(Log(LogLevel.INFO, '_receiveWorker requesting file ${queue.first.name}', "overriden", className: 'Receiver'));
       try {
         // Send the file name to the socket. So the sender knows which file to send.
         socket.write(utf8.encode(queue.first.name));
       } catch (e, stackTrace) {
-        Logger().error('_receiveWorker socket cannot write on ${currentFile.name}', 'Receiver', error: e, stackTrace: stackTrace);
+        loggerSendPort.send(Log(LogLevel.ERROR, '_receiveWorker socket cannot write on ${currentFile.name}', "overriden",
+            className: 'Receiver', error: e, stackTrace: stackTrace));
 
         // If the socket cannot write, we send an error event to the dataHandler. The dataHandler will cancel the transfer.
         sendPort.send(
@@ -125,7 +139,8 @@ class Receiver extends Transfer {
                 ));
               }
             } catch (e, stackTrace) {
-              Logger().error('_receiveWorker socket cannot read on ${currentFile.name}', 'Receiver', error: e, stackTrace: stackTrace);
+              loggerSendPort.send(Log(LogLevel.ERROR, '_receiveWorker socket cannot read on ${currentFile.name}', "overriden",
+                  className: 'Receiver', error: e, stackTrace: stackTrace));
 
               sendPort.send(
                 TransferEvent(
@@ -138,7 +153,7 @@ class Receiver extends Transfer {
 
             // If the total read bytes is equal to the file size that requested from the sender, the file is received.
             if (totalRead == queue.first.byteSize) {
-              Logger().info('_receiveWorker file received ${currentFile.name}', 'Receiver');
+              loggerSendPort.send(Log(LogLevel.INFO, '_receiveWorker file received ${currentFile.name}', "overriden", className: 'Receiver'));
               sendPort.send(TransferEvent(TransferEventType.fileEnd, currentFile: queue.first));
 
               queue.removeAt(0); // remove the first element from the queue (the file that was just received)
@@ -146,10 +161,10 @@ class Receiver extends Transfer {
 
               try {
                 await FileOperations.tmpToFile(tempFile, currentFile.path!);
-                Logger().info('_receiveWorker file moved to ${currentFile.path}', 'Receiver');
+                loggerSendPort.send(Log(LogLevel.INFO, '_receiveWorker file moved to ${currentFile.path}', "overriden", className: 'Receiver'));
               } catch (e, stackTrace) {
-                Logger().error('_receiveWorker file cannot move to ${currentFile.path} from ${tempFile.path}', 'Receiver',
-                    error: e, stackTrace: stackTrace);
+                loggerSendPort.send(Log(LogLevel.ERROR, '_receiveWorker file cannot move to ${currentFile.path} from ${tempFile.path}', "overriden",
+                    className: 'Receiver', error: e, stackTrace: stackTrace));
 
                 sendPort.send(
                   TransferEvent(
@@ -171,7 +186,7 @@ class Receiver extends Transfer {
 
               if (queue.isEmpty) {
                 // If the queue is empty, we send an end event to the dataHandler. The dataHandler will stop the timer and close the transfer.
-                Logger().info('_receiveWorker queue is empty sending end event', 'Receiver');
+                loggerSendPort.send(Log(LogLevel.INFO, '_receiveWorker queue is empty sending end event', "overriden", className: 'Receiver'));
                 sendPort.send(TransferEvent(TransferEventType.end));
                 return;
               }

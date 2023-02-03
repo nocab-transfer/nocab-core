@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:nocab_core/nocab_core.dart';
-import 'package:nocab_logger/nocab_logger.dart';
 
 class TransferController {
   Transfer transfer;
@@ -29,47 +28,48 @@ class TransferController {
         ServerSocket.bind(InternetAddress.anyIPv4, transfer.controlPort).then((server) {
           _serverSocket = server;
 
-          Logger().info('Listening for initial control connection on ${server.address.address}:${server.port}', 'TransferController');
+          NoCabCore.logger
+              .info('Listening for initial control connection on ${server.address.address}:${server.port}', className: 'TransferController');
           server.listen((socket) async {
             // if ip is not the same as the one we expect, close the socket
             if (transfer.deviceInfo.ip != socket.remoteAddress.address) {
               socket.close();
-              Logger().warning(
+              NoCabCore.logger.warning(
                 'Received connection from ${socket.remoteAddress.address} but expected ${transfer.deviceInfo.ip}',
-                'TransferController',
+                className: 'TransferController',
               );
               return;
             }
 
-            Logger().info('Received initial control connection from ${socket.remoteAddress.address}', 'TransferController');
+            NoCabCore.logger.info('Received initial control connection from ${socket.remoteAddress.address}', className: 'TransferController');
             _controlSocket = socket;
             _listenSocket(socket);
-            Logger().info('Closing control server', 'TransferController');
+            NoCabCore.logger.info('Closing control server', className: 'TransferController');
             server.close();
           });
           return null;
         });
       } catch (e, stackTrace) {
-        Logger().error('Error binding to control socket', 'TransferController', error: e, stackTrace: stackTrace);
+        NoCabCore.logger.error('Error binding to control socket', className: 'TransferController', error: e, stackTrace: stackTrace);
         _controlSocket?.close();
       }
     } else {
       // On receiver side, we should connect to sender control socket
       try {
         Socket.connect(transfer.deviceInfo.ip, transfer.controlPort).then((socket) {
-          Logger().info('Connected to control socket ${socket.remoteAddress.address}:${socket.remotePort}', 'TransferController');
+          NoCabCore.logger.info('Connected to control socket ${socket.remoteAddress.address}:${socket.remotePort}', className: 'TransferController');
           _controlSocket = socket;
           _listenSocket(socket);
         });
       } catch (e, stackTrace) {
-        Logger().error('Error connecting to control socket', 'TransferController', error: e, stackTrace: stackTrace);
+        NoCabCore.logger.error('Error connecting to control socket', className: 'TransferController', error: e, stackTrace: stackTrace);
         _controlSocket?.close();
       }
     }
   }
 
   void _listenSocket(Socket socket) {
-    Logger().info('Listening to control socket ${socket.remoteAddress.address}:${socket.remotePort}', 'TransferController');
+    NoCabCore.logger.info('Listening to control socket ${socket.remoteAddress.address}:${socket.remotePort}', className: 'TransferController');
 
     socket.listen((event) {
       try {
@@ -78,16 +78,16 @@ class TransferController {
 
         // if transferUuid is not the same as the one we expect, ignore the data
         if (data['transferUuid'] != transfer.uuid) {
-          Logger().warning(
+          NoCabCore.logger.warning(
             'Incoming control data has invalid transferUuid ${data['transferUuid']}, expected ${transfer.uuid}',
-            'TransferController',
+            className: 'TransferController',
           );
           return;
         }
 
         switch (data['type']) {
           case null:
-            Logger().warning('Received null type', 'TransferController');
+            NoCabCore.logger.warning('Received null type', className: 'TransferController');
             break;
           case 'cancel':
             // Notifying the transfer that it has been cancelled by the other side
@@ -98,7 +98,7 @@ class TransferController {
             _handleIncomingError(data);
         }
       } catch (e) {
-        Logger().warning('Received invalid data', 'TransferController', error: e);
+        NoCabCore.logger.warning('Received invalid data', className: 'TransferController', error: e);
       }
     }, onDone: () => _handleDoneOrError(socket), onError: (e) => _handleDoneOrError(socket));
   }
@@ -130,11 +130,11 @@ class TransferController {
   /// to be cancelled, if so, the [error] argument should be set to the error
   Future<void> cancel({bool incoming = false, bool isError = false, CoreError? error}) async {
     if (!transfer.ongoing) {
-      Logger().warning('Transfer is not ongoing', 'TransferController');
+      NoCabCore.logger.warning('Transfer is not ongoing', className: 'TransferController');
       return;
     }
 
-    Logger().info('Cancelling transfer ${transfer.uuid}', 'TransferController(${transfer.runtimeType})');
+    NoCabCore.logger.info('Cancelling transfer ${transfer.uuid}', className: 'TransferController(${transfer.runtimeType})');
     // Cancel the transfer on current side
     transfer.dataHandler.cancel();
 
@@ -152,7 +152,7 @@ class TransferController {
       // If the transcer is cancelled in this side, we send a cancel message to the other side
 
       if (_controlSocket == null) {
-        Logger().warning('Control socket is null', 'TransferController');
+        NoCabCore.logger.warning('Control socket is null', className: 'TransferController');
         return;
       }
 
@@ -165,7 +165,7 @@ class TransferController {
         }))));
         await _controlSocket?.flush();
       } catch (e, stackTrace) {
-        Logger().warning('Failed to send cancel message', 'TransferController', error: e, stackTrace: stackTrace);
+        NoCabCore.logger.warning('Failed to send cancel message', className: 'TransferController', error: e, stackTrace: stackTrace);
         _controlSocket?.close();
       }
     }
@@ -173,7 +173,7 @@ class TransferController {
 
   _handleDoneOrError(Socket socket) {
     if (transfer.ongoing) {
-      Logger().warning('Control socket closed while transfer is ongoing', 'TransferController(${transfer.runtimeType})');
+      NoCabCore.logger.warning('Control socket closed while transfer is ongoing', className: 'TransferController(${transfer.runtimeType})');
     }
   }
 }
