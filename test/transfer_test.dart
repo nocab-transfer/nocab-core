@@ -95,22 +95,24 @@ void main() {
       var sender = Sender(deviceInfo: receiverDeviceInfo, files: senderFiles, transferPort: 7814, controlPort: 7815, uuid: uuid);
       await sender.start();
 
+      Directory tempFolder = await Directory(p.join(Directory.current.path, "test")).createTemp("testTmp_");
+
       // override path
-      List<FileInfo> receiverFiles = senderFiles.map((e) => e..path = p.join('test', 'cancellation_test', "downloaded${e.name}")).toList();
+      List<FileInfo> receiverFiles = senderFiles.map((e) => e..path = p.joinAll([...p.split(tempFolder.path), "downloaded${e.name}"])).toList();
 
       var receiver = Receiver(
         deviceInfo: senderDeviceInfo,
         files: receiverFiles,
         transferPort: 7814,
         controlPort: 7815,
-        tempFolder: Directory(p.join(Directory.current.path, "test", "cancellation_test")),
+        tempFolder: tempFolder,
         uuid: uuid,
       );
 
       await receiver.start();
 
       sender.onEvent.listen((event) {
-        if (event is ProgressReport && event.currentFile.name == senderFiles[1].name) {
+        if (event is ProgressReport && event.currentFile.name == senderFiles[0].name) {
           sender.cancel();
         }
       });
@@ -118,12 +120,15 @@ void main() {
       await Future.wait([sender.done, receiver.done]);
 
       expect(receiver.iscancelled, equals(true));
-
-      await NoCabCore.logger.close();
-
-      await Directory(p.join(Directory.current.path, "test", "cancellation_test")).delete(recursive: true);
     });
 
-    //tearDownAll(() async => await NoCabCore.logger.close(deleteFile: true));
+    tearDownAll(() async {
+      await NoCabCore.logger.close(deleteFile: false);
+      var tempEntity = await Directory(p.join(Directory.current.path, "test")).list().where((element) => element.path.contains("testTmp_")).toList();
+
+      for (var folder in tempEntity) {
+        await folder.delete(recursive: true);
+      }
+    });
   });
 }

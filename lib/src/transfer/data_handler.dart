@@ -151,7 +151,7 @@ class DataHandler {
 
     // listen for data from sender/receiver isolate
     handledReceiverPort.listen((data) {
-      data as TransferEvent;
+      if (data is! TransferEvent) return;
       switch (data.type) {
         case TransferEventType.start:
           loggerPort.send(Log(LogLevel.INFO, "Received start event resetting stopwatch", "overridden", className: "DataHandler($isolateName)"));
