@@ -28,21 +28,43 @@ class Receiver extends Transfer {
 
   @override
   Future<void> cleanUp() async {
-    NoCabCore.logger.info('Receiver cleanUp started', className: 'Receiver');
+    NoCabCore.logger.info('CleanUp started', className: 'Receiver');
     if (temp.existsSync()) {
-      int retryCount = 0;
-      while (retryCount < 5) {
+      int tempRetry = 0;
+      int cancelFileRetry = 0;
+
+      while (tempRetry < 5) {
         try {
-          if (retryCount > 0) NoCabCore.logger.info('Receiver cleanUp retrying, (RetryCount:$retryCount)', className: 'Receiver');
+          if (tempRetry > 0) NoCabCore.logger.info('Trying to delete temp files, (RetryCount:$tempRetry)', className: 'Receiver');
           await Future.delayed(Duration(seconds: 1));
           temp.deleteSync(recursive: true);
-          NoCabCore.logger.info('Receiver cleanUp completed', className: 'Receiver');
+          NoCabCore.logger.info('Temp files deleted successfully', className: 'Receiver');
           break;
         } catch (e, stackTrace) {
-          NoCabCore.logger.error('Receiver cleanUp error', className: 'Receiver', error: e, stackTrace: stackTrace);
-          retryCount++;
+          NoCabCore.logger.error('Temp files cannot delete', className: 'Receiver', error: e, stackTrace: stackTrace);
+          tempRetry++;
         }
       }
+
+      if (iscancelled) {
+        while (cancelFileRetry < 5) {
+          try {
+            if (cancelFileRetry > 0) NoCabCore.logger.info('Trying to delete downloaded files, (RetryCount:$cancelFileRetry)', className: 'Receiver');
+            await Future.delayed(Duration(seconds: 1));
+            for (final file in files) {
+              if (file.path == null || file.path!.isEmpty) return;
+              if (File(file.path!).existsSync()) File(file.path!).deleteSync();
+            }
+            NoCabCore.logger.info('Downloaded files deleted successfully', className: 'Receiver');
+            break;
+          } catch (e, stackTrace) {
+            NoCabCore.logger.error('Downloaded files cannot delete', className: 'Receiver', error: e, stackTrace: stackTrace);
+            cancelFileRetry++;
+          }
+        }
+      }
+
+      NoCabCore.logger.info('CleanUp finished', className: 'Receiver');
     }
   }
 
