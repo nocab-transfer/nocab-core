@@ -68,10 +68,8 @@ class Radar {
         }
 
         socket.close();
-        print("socket closed");
-      } on SocketException catch (e, stackTrace) {
+      } on SocketException {
         socket?.close();
-        print("socket closed on exception $e, $stackTrace");
       }
     }
     yield devices;
