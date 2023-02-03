@@ -33,6 +33,7 @@ abstract class Transfer {
         case EndReport:
         case ErrorReport:
         case CancelReport:
+          NoCabCore.logger.info("Transfer is finished with event: ${event.runtimeType}", className: runtimeType.toString());
           await cleanUp();
           iscancelled = event is CancelReport;
           _reportStreamController.close();
