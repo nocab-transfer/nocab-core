@@ -1,0 +1,22 @@
+name: Check Code
+
+on: workflow_dispatch
+
+jobs:
+  build:
+    name: Analyze Dart
+    runs-on: windows-latest
+    container:
+      image:  dart:beta
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Install dependencies
+        run: dart pub get
+      - name: Analyze Dart
+        uses: zgosalvez/github-actions-analyze-dart@v2
+        with:
+          line-length: 150
+          fail-on-warnings: true
+      - name: Run tests
+        run: dart test -j 1
