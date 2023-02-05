@@ -129,7 +129,7 @@ void main() {
 
     tearDownAll(() async {
       try {
-        await NoCabCore.logger.close(deleteFile: true);
+        NoCabCore.dispose();
         var tempEntity =
             await Directory(p.join(Directory.current.path, "test")).list().where((element) => element.path.contains("testTmp_")).toList();
 

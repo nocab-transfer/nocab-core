@@ -27,5 +27,5 @@ void main() {
     Radar().stop();
   });
 
-  tearDown(() async => await NoCabCore.logger.close(deleteFile: true));
+  tearDown(() => NoCabCore.dispose());
 }
