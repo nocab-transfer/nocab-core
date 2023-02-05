@@ -1,6 +1,6 @@
 name: Check Code Win
 
-on: [ push ]
+on: workflow_dispatch
 
 jobs:
   build:
