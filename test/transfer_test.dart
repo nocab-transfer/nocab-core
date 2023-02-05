@@ -123,16 +123,17 @@ void main() {
     });
 
     tearDownAll(() async {
-     try {
+      try {
         await NoCabCore.logger.close(deleteFile: true);
-      var tempEntity = await Directory(p.join(Directory.current.path, "test")).list().where((element) => element.path.contains("testTmp_")).toList();
+        var tempEntity =
+            await Directory(p.join(Directory.current.path, "test")).list().where((element) => element.path.contains("testTmp_")).toList();
 
-      for (var folder in tempEntity) {
-        await folder.delete(recursive: true);
-      }
-     } catch (e) {
+        for (var folder in tempEntity) {
+          await folder.delete(recursive: true);
+        }
+      } catch (e) {
         print(e);
-     }
+      }
     });
   });
 }
