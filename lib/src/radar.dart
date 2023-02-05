@@ -27,7 +27,7 @@ class Radar {
       radarSocket?.listen((socket) async {
         NoCabCore.logger.info('Received connection from ${socket.remoteAddress.address} trying to write current deviceInfo', className: 'Radar');
         try {
-          socket.write(base64.encode(utf8.encode(json.encode(DeviceManager().currentDeviceInfo.toJson()))));
+          socket.write(base64.encode(utf8.encode(json.encode(NoCabCore().currentDeviceInfo.toJson()))));
         } catch (e) {
           NoCabCore.logger.error('Failed to write current deviceInfo', className: 'Radar', error: e);
         } finally {
@@ -50,11 +50,11 @@ class Radar {
     NoCabCore.logger.info('Searching for devices on port $radarPort', className: 'Radar');
 
     List<DeviceInfo> devices = [];
-    baseIp ??= DeviceManager().currentDeviceInfo.ip.split('.').sublist(0, 3).join('.');
+    baseIp ??= NoCabCore().currentDeviceInfo.ip.split('.').sublist(0, 3).join('.');
     Socket? socket;
 
     for (int i = 1; i < 255; i++) {
-      if (skipCurrentDevice && i == int.parse(DeviceManager().currentDeviceInfo.ip.split('.').last)) continue;
+      if (skipCurrentDevice && i == int.parse(NoCabCore().currentDeviceInfo.ip.split('.').last)) continue;
       if (baseIp == "127.0.0" && i != 1) continue;
       try {
         socket = await Socket.connect('$baseIp.$i', radarPort, timeout: const Duration(milliseconds: 20));

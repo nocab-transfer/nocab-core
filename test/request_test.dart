@@ -4,12 +4,16 @@ import 'package:nocab_core/nocab_core.dart';
 import 'package:test/test.dart';
 
 void main() {
-  setUp(() => NoCabCore.init(logFolderPath: 'test'));
+  setUp(() => NoCabCore.init(
+        deviceName: "Sender",
+        deviceIp: "127.0.0.1",
+        requestPort: 5001,
+        logFolderPath: 'test',
+      ));
 
   test(
     'Request Test',
     () async {
-      DeviceManager().initialize("Sender", "127.0.0.1", 5001);
       await RequestListener().start(onError: (p0) => throw p0);
 
       File file = File("test/_testFile");

@@ -21,7 +21,7 @@ class RequestListener {
     NoCabCore.logger.info("Starting listening", className: "RequestListener");
 
     try {
-      serverSocket = await ServerSocket.bind(InternetAddress.anyIPv4, DeviceManager().currentDeviceInfo.requestPort);
+      serverSocket = await ServerSocket.bind(InternetAddress.anyIPv4, NoCabCore().currentDeviceInfo.requestPort);
       NoCabCore.logger.info("Listening on ${serverSocket!.address.address}:${serverSocket!.port}", className: "RequestListener");
     } catch (e, stackTrace) {
       NoCabCore.logger.error("Socket binding error", className: "RequestListener", error: e, stackTrace: stackTrace);

@@ -27,7 +27,7 @@ class RequestMaker {
     }
 
     return ShareRequest(
-      deviceInfo: DeviceManager().currentDeviceInfo,
+      deviceInfo: NoCabCore().currentDeviceInfo,
       files: fileInfos,
       transferPort: transferPort,
       controlPort: controlPort,

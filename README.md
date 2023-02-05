@@ -41,7 +41,7 @@ import 'dart:async';
 Future<void> main() async {
   // If you are non-Flutter project, you should initialize the isar libraries manually
   // Don't need to do this if you are using Flutter. (Instead, you should add isar_flutter_libs to your pubspec.yaml)
-  await NoCabCore.downloadIsarCore();
+  await NoCabCore.init(logFolderPath: "path/to/log/folder/");
 
   // Device manager should be initialized with the device name and the device IP address and request port
   // The request port is the port that the device will listen to for incoming requests

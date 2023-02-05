@@ -7,7 +7,12 @@ import 'package:uuid/uuid.dart';
 
 void main() {
   group('Transfer Test', () {
-    setUpAll(() => NoCabCore.init(logFolderPath: 'test'));
+    setUpAll(() => NoCabCore.init(
+          deviceName: "Transfer",
+          deviceIp: "127.0.0.1",
+          requestPort: 5001,
+          logFolderPath: 'test',
+        ));
 
     test('Normal', () async {
       var receiverDeviceInfo = DeviceInfo(name: "Receiver", ip: "127.0.0.1", requestPort: 5001, opsystem: Platform.operatingSystemVersion);
