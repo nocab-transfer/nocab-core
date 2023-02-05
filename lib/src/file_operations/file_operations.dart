@@ -5,6 +5,24 @@ import 'package:nocab_core/nocab_core.dart';
 import 'package:path/path.dart';
 
 class FileOperations {
+  /// Finds a file path that doesn't exist in the given [downloadPath] and
+  /// returns the path to it.
+  ///
+  /// It does this by checking if a file with the given [fileName] exists in
+  /// [downloadPath] and, if so, adding a number in parentheses after the file
+  /// name. For example, if "file.png" already exists in the download path, then
+  /// this function will return "file (1).png". If "file (1).png" already
+  /// exists, then it will return "file (2).png", and so on.
+  ///
+  /// This function will not return a file path that already exists.
+  ///
+  /// Parameters:
+  ///   * [fileName]: The name of the file whose file path is being searched for.
+  ///   * [downloadPath]: The path to the directory in which the file is being
+  ///     searched for.
+  ///
+  /// Returns:
+  ///   A file path that doesn't exist in the given [downloadPath].
   static String findUnusedFilePath({required String fileName, required String downloadPath}) {
     int fileIndex = 0;
     String path;
