@@ -6,9 +6,10 @@ jobs:
   build:
     name: Analyze Dart
     runs-on: windows-latest
-    container:
-      image:  dart:beta
     steps:
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'master'
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Install dependencies
