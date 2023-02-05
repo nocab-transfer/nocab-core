@@ -21,4 +21,9 @@ class CoreError {
         'methodName': methodName,
         'stackTrace': stackTrace.toString(),
       };
+
+  @override
+  String toString() {
+    return 'CoreError{title: $title, error: $error, className: $className, methodName: $methodName, stackTrace: $stackTrace}';
+  }
 }
