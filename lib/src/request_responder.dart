@@ -5,6 +5,7 @@ import 'package:nocab_core/nocab_core.dart';
 import 'package:path/path.dart';
 
 extension Responder on ShareRequest {
+  /// Accepts the request and starts the transfer
   Future<void> accept({Function(CoreError)? onError, required Directory downloadDirectory, required Directory tempDirectory}) async {
     NoCabCore.logger.info("Accepting request", className: "RequestResponder");
     try {
@@ -52,6 +53,7 @@ extension Responder on ShareRequest {
     }
   }
 
+  /// Rejects the request
   void reject({Function(CoreError)? onError, String? info}) {
     NoCabCore.logger.info("Rejecting request", className: "RequestResponder");
     try {

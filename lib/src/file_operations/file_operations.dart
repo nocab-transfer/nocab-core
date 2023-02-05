@@ -5,11 +5,6 @@ import 'package:nocab_core/nocab_core.dart';
 import 'package:path/path.dart';
 
 class FileOperations {
-  static Future<void> tmpToFile(File file, String newPath) async {
-    await file.copy(newPath);
-    await file.delete();
-  }
-
   static String findUnusedFilePath({required String fileName, required String downloadPath}) {
     int fileIndex = 0;
     String path;
@@ -22,21 +17,30 @@ class FileOperations {
     return path;
   }
 
-  static Future<List<FileInfo>> convertPathsToFileInfos(List<String> paths) async {
-    // create a list contains all directories
-    List<Directory> directoryList = paths.where((element) => Directory(element).existsSync()).map((e) => Directory(e)).toList();
-
+  /// This function will return a list of [FileInfo] from a string list of [paths]
+  ///
+  /// It will also include files under directories if [includeFilesUnderDirectories] is true
+  static Future<List<FileInfo>> convertPathsToFileInfos(List<String> paths, {bool includeFilesUnderDirectories = true}) async {
     // create a list contains all files
     List<FileInfo> files = [];
     for (var filePath in paths.where((path) => File(path).existsSync())) {
       files.add(FileInfo.fromFile(File(filePath)));
     }
 
-    // add files under directories
-    await Future.forEach(directoryList, (dir) async => files.addAll(await FileOperations.getFilesUnderDirectory(dir.path)));
+    if (includeFilesUnderDirectories) {
+      // create a list contains all directories
+      List<Directory> directoryList = paths.where((element) => Directory(element).existsSync()).map((e) => Directory(e)).toList();
+
+      // add files under directories
+      await Future.forEach(directoryList, (dir) async => files.addAll(await FileOperations.getFilesUnderDirectory(dir.path)));
+    }
+
     return files;
   }
 
+  /// Returns a list of files under the given directory
+  ///
+  /// [path] is the path of the directory
   static Future<List<FileInfo>> getFilesUnderDirectory(String path, [String? parentSubDirectory]) async {
     // open new thread to reduce cpu load
     return await Isolate.run(() => _getFilesUnderDirectory(path, parentSubDirectory));

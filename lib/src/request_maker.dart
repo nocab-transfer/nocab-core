@@ -36,6 +36,13 @@ class RequestMaker {
     );
   }
 
+  /// Sends a [ShareRequest] to the other device.
+  ///
+  /// [receiverDeviceInfo] is the [DeviceInfo] of the receiver.
+  ///
+  /// [request] is the [ShareRequest] object.
+  ///
+  /// [onError] is the callback function that will be called when an error occurs.
   static Future<void> requestTo(DeviceInfo receiverDeviceInfo, {required ShareRequest request, Function(CoreError)? onError}) async {
     Socket socket;
 

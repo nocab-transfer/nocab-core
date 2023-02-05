@@ -17,6 +17,10 @@ class RequestListener {
   ServerSocket? serverSocket;
 
   ShareRequest? latestRequest;
+
+  /// Starts listening for requests.
+  ///
+  /// [onError] is the callback that is called when an error occurs.
   Future<void> start({Function(CoreError)? onError}) async {
     NoCabCore.logger.info("Starting listening", className: "RequestListener");
 
@@ -114,6 +118,7 @@ class RequestListener {
     }
   }
 
+  /// Stops listening for requests.
   void stop() {
     NoCabCore.logger.info("Stopped listening", className: "RequestListener");
     serverSocket?.close();

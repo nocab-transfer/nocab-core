@@ -183,7 +183,8 @@ class Receiver extends Transfer {
               await currentSink.close(); // close the sink to prevent memory leaks
 
               try {
-                await FileOperations.tmpToFile(tempFile, currentFile.path!);
+                await tempFile.copy(currentFile.path!);
+                await tempFile.delete();
                 loggerSendPort.send(Log(LogLevel.INFO, '_receiveWorker file moved to ${currentFile.path}', "overriden", className: 'Receiver'));
               } catch (e, stackTrace) {
                 loggerSendPort.send(Log(LogLevel.ERROR, '_receiveWorker file cannot move to ${currentFile.path} from ${tempFile.path}', "overriden",

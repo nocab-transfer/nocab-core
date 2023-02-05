@@ -14,6 +14,9 @@ class Radar {
 
   ServerSocket? radarSocket;
 
+  /// Start the radar to be discoverable on the network.
+  ///
+  /// Use `searchForDevices()` if you want to find other devices
   Future<void> start({int radarPort = 62193, Function(CoreError)? onError}) async {
     NoCabCore.logger.info('Started on port $radarPort', className: 'Radar');
 
@@ -37,12 +40,18 @@ class Radar {
     }
   }
 
+  /// Stop the radar to stop being discoverable on the network.
   void stop() {
     NoCabCore.logger.info('Stopped', className: 'Radar');
     radarSocket?.close();
   }
 
-  static Stream<List<DeviceInfo>> searchForDevices(int radarPort, {String? baseIp, bool skipCurrentDevice = true}) async* {
+  /// This function searches for devices on the local network by connecting to each IP address and port on the local network
+  /// and sending a request to the radar server. It returns a stream of lists of DeviceInfo objects, each list containing
+  /// the devices found so far. It takes an optional radarPort parameter, which defaults to 62193, and a baseIp parameter,
+  /// which defaults to the current device's IP address. It also takes an optional skipCurrentDevice parameter, which
+  /// defaults to true, which tells the function whether or not to skip the current device's IP address.
+  static Stream<List<DeviceInfo>> searchForDevices({int radarPort = 62193, String? baseIp, bool skipCurrentDevice = true}) async* {
     NoCabCore.logger.info('Searching for devices on port $radarPort', className: 'Radar');
 
     List<DeviceInfo> devices = [];
