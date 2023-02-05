@@ -12,9 +12,6 @@ class Radar {
     return _singleton;
   }
 
-  final _deviceController = StreamController<DeviceInfo>.broadcast();
-  Stream<DeviceInfo> get listen => _deviceController.stream;
-
   ServerSocket? radarSocket;
 
   Future<void> start({int radarPort = 62193, Function(CoreError)? onError}) async {
@@ -42,7 +39,6 @@ class Radar {
 
   void stop() {
     NoCabCore.logger.info('Stopped', className: 'Radar');
-    _deviceController.close();
     radarSocket?.close();
   }
 
