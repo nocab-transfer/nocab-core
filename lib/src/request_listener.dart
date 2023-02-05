@@ -35,13 +35,13 @@ class RequestListener {
               className: "RequestListener");
           var shareResponse = ShareResponse(response: false, info: "Another request is in progress");
           socket.write(base64.encode(utf8.encode(json.encode(shareResponse.toJson()))));
-          socket.flush().then((value) => socket.close());
+          socket.flush().then((value) => socket.destroy());
           return;
         }
       } catch (e, stackTrace) {
         onError?.call(CoreError("Socket error", className: "RequestListener", methodName: "start", stackTrace: stackTrace, error: e));
         NoCabCore.logger.error("Socket error", className: "RequestListener", error: e, stackTrace: stackTrace);
-        socket.close();
+        socket.destroy();
       }
 
       socket.listen(
@@ -64,7 +64,7 @@ class RequestListener {
             NoCabCore.logger.error("Socket error while parsing request", className: "RequestListener", error: e, stackTrace: stackTrace);
             onError?.call(
                 CoreError("Socket error while parsing request", className: "RequestListener", methodName: "start", stackTrace: stackTrace, error: e));
-            socket.close();
+            socket.destroy();
           }
         },
       );

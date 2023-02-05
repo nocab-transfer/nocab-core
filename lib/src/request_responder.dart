@@ -40,7 +40,7 @@ extension Responder on ShareRequest {
       NoCabCore.logger.info("Writing accept response", className: "RequestResponder");
       socket.write(base64.encode(utf8.encode(json.encode(shareResponse.toJson()))));
       await socket.flush();
-      socket.close();
+      socket.destroy();
 
       NoCabCore.logger.info("Registering response", className: "RequestResponder");
       registerResponse(shareResponse);
@@ -58,7 +58,7 @@ extension Responder on ShareRequest {
       var shareResponse = ShareResponse(response: false, info: info ?? "User rejected the request");
       NoCabCore.logger.info("Writing reject response", className: "RequestResponder");
       socket.write(base64.encode(utf8.encode(json.encode(shareResponse.toJson()))));
-      socket.flush().then((value) => socket.close());
+      socket.flush().then((value) => socket.destroy());
       NoCabCore.logger.info("Registering response", className: "RequestResponder");
       registerResponse(shareResponse);
     } catch (e, stackTrace) {

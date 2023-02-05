@@ -13,15 +13,7 @@ class Sender extends Transfer {
 
   @override
   Future<void> start() async {
-    dataHandler = DataHandler(_sendWorker, [files, deviceInfo, transferPort, NoCabCore.logger.sendPort], transferController);
-    pipeReport(dataHandler.onEvent); // Pipe dataHandler events to this transfer
-  }
-
-  @override
-  Future<void> cleanUp() async {
-    // Sender does not need to clean up anything
-    // Maybe in the future we will need to clean up the temp folder which is used to store encrypted files
-    return;
+    setDataHandler(DataHandler(_sendWorker, [files, deviceInfo, transferPort, NoCabCore.logger.sendPort], transferController));
   }
 
   static Future<void> _sendWorker(List args) async {
@@ -112,8 +104,8 @@ class Sender extends Transfer {
         switch (event) {
           case RawSocketEvent.read:
             try {
+              String data = utf8.decode(socket.read()!);
               try {
-                String data = utf8.decode(socket.read()!);
                 FileInfo file = queue.firstWhere((element) => element.name == data); // Find the file in the queue
                 loggerSendPort.send(Log(LogLevel.INFO, "_sendWorker socket requested file: ${file.name}", "overriden", className: 'Sender'));
                 // Send a start event to the dataHandler. The dataHandler will start the timer.
@@ -121,7 +113,8 @@ class Sender extends Transfer {
                 send(file, socket); // Send the file
               } catch (e) {
                 // If the file is not found in the queue send an error and send error event which will kill the transfer
-                loggerSendPort.send(Log(LogLevel.ERROR, "_sendWorker socket requested file not found", "overriden", className: 'Sender', error: e));
+                loggerSendPort
+                    .send(Log(LogLevel.ERROR, "_sendWorker socket requested file not found $data", "overriden", className: 'Sender', error: e));
                 sendPort.send(TransferEvent(
                   TransferEventType.error,
                   error: CoreError("File not found", className: 'Sender', methodName: '_sendWorker', stackTrace: StackTrace.current, error: e),

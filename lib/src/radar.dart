@@ -31,7 +31,7 @@ class Radar {
         } catch (e) {
           NoCabCore.logger.error('Failed to write current deviceInfo', className: 'Radar', error: e);
         } finally {
-          socket.flush().then((value) => socket.close());
+          socket.flush().then((value) => socket.destroy());
         }
       });
     } catch (e, stackTrace) {
@@ -67,9 +67,9 @@ class Radar {
           yield devices;
         }
 
-        socket.close();
+        socket.destroy();
       } on SocketException {
-        socket?.close();
+        socket?.destroy();
       }
     }
     yield devices;

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
@@ -11,6 +12,7 @@ import 'package:path/path.dart';
 
 class Receiver extends Transfer {
   Directory temp;
+
   Receiver({
     required super.deviceInfo,
     required super.files,
@@ -22,12 +24,11 @@ class Receiver extends Transfer {
 
   @override
   Future<void> start() async {
-    dataHandler = DataHandler(_receiveWorker, [files, deviceInfo, transferPort, temp.path, NoCabCore.logger.sendPort], transferController);
-    pipeReport(dataHandler.onEvent); // Pipe dataHandler events to this transfer
+    setDataHandler(DataHandler(_receiveWorker, [files, deviceInfo, transferPort, temp.path, NoCabCore.logger.sendPort], transferController));
   }
 
   @override
-  Future<void> cleanUp() async {
+  Future<void> cleanUp({bool cleanUpDownloaded = false}) async {
     NoCabCore.logger.info('CleanUp started', className: 'Receiver');
     if (temp.existsSync()) {
       int tempRetry = 0;
@@ -46,7 +47,7 @@ class Receiver extends Transfer {
         }
       }
 
-      if (iscancelled) {
+      if (iscancelled && cleanUpDownloaded) {
         while (cancelFileRetry < 5) {
           try {
             if (cancelFileRetry > 0) NoCabCore.logger.info('Trying to delete downloaded files, (RetryCount:$cancelFileRetry)', className: 'Receiver');

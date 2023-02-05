@@ -41,13 +41,10 @@ class DataHandler {
       switch (data.runtimeType) {
         case EndReport:
         case CancelReport:
-          _eventController.close();
-          dataHandlerPort.close();
-          break;
         case ErrorReport:
           _eventController.close();
           dataHandlerPort.close();
-          transferController.cancel(isError: true, error: (data as ErrorReport).error);
+          if (data is ErrorReport) transferController.sendError(data.error);
           break;
         default:
           break;

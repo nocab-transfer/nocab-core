@@ -92,7 +92,7 @@ void main() {
 
       String uuid = Uuid().v4();
 
-      var sender = Sender(deviceInfo: receiverDeviceInfo, files: senderFiles, transferPort: 7814, controlPort: 7815, uuid: uuid);
+      var sender = Sender(deviceInfo: receiverDeviceInfo, files: senderFiles, transferPort: 7816, controlPort: 7817, uuid: uuid);
       await sender.start();
 
       Directory tempFolder = await Directory(p.join(Directory.current.path, "test")).createTemp("testTmp_");
@@ -103,8 +103,8 @@ void main() {
       var receiver = Receiver(
         deviceInfo: senderDeviceInfo,
         files: receiverFiles,
-        transferPort: 7814,
-        controlPort: 7815,
+        transferPort: 7816,
+        controlPort: 7817,
         tempFolder: tempFolder,
         uuid: uuid,
       );
