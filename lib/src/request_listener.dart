@@ -19,9 +19,7 @@ class RequestListener {
   ShareRequest? latestRequest;
 
   /// Starts listening for requests.
-  ///
-  /// [onError] is the callback that is called when an error occurs.
-  Future<void> start({Function(CoreError)? onError}) async {
+  Future<void> start() async {
     NoCabCore.logger.info("Starting listening", className: "RequestListener");
 
     try {
@@ -29,7 +27,7 @@ class RequestListener {
       NoCabCore.logger.info("Listening on ${serverSocket!.address.address}:${serverSocket!.port}", className: "RequestListener");
     } catch (e, stackTrace) {
       NoCabCore.logger.error("Socket binding error", className: "RequestListener", error: e, stackTrace: stackTrace);
-      onError?.call(CoreError("Socket binding error", className: "RequestListener", methodName: "start", stackTrace: stackTrace, error: e));
+      throw CoreError("Socket binding error", className: "RequestListener", methodName: "start", stackTrace: stackTrace, error: e);
     }
 
     serverSocket?.listen((socket) {
@@ -43,9 +41,9 @@ class RequestListener {
           return;
         }
       } catch (e, stackTrace) {
-        onError?.call(CoreError("Socket error", className: "RequestListener", methodName: "start", stackTrace: stackTrace, error: e));
         NoCabCore.logger.error("Socket error", className: "RequestListener", error: e, stackTrace: stackTrace);
         socket.destroy();
+        throw CoreError("Socket error", className: "RequestListener", methodName: "start", stackTrace: stackTrace, error: e);
       }
 
       socket.listen(
@@ -66,9 +64,14 @@ class RequestListener {
             _requestHandler(latestRequest!, socket);
           } catch (e, stackTrace) {
             NoCabCore.logger.error("Socket error while parsing request", className: "RequestListener", error: e, stackTrace: stackTrace);
-            onError?.call(
-                CoreError("Socket error while parsing request", className: "RequestListener", methodName: "start", stackTrace: stackTrace, error: e));
             socket.destroy();
+            throw CoreError(
+              "Socket error while parsing request",
+              className: "RequestListener",
+              methodName: "start",
+              stackTrace: stackTrace,
+              error: e,
+            );
           }
         },
       );

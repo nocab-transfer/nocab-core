@@ -17,7 +17,7 @@ class Radar {
   /// Start the radar to be discoverable on the network.
   ///
   /// Use `searchForDevices()` if you want to find other devices
-  Future<void> start({int radarPort = 62193, Function(CoreError)? onError}) async {
+  Future<void> start({int radarPort = 62193}) async {
     NoCabCore.logger.info('Started on port $radarPort', className: 'Radar');
 
     try {
@@ -36,7 +36,7 @@ class Radar {
       });
     } catch (e, stackTrace) {
       NoCabCore.logger.error('failed to start on port $radarPort', className: 'Radar', error: e, stackTrace: stackTrace);
-      onError?.call(CoreError('Failed to start on port $radarPort', className: "Radar", methodName: "start", stackTrace: stackTrace, error: e));
+      throw CoreError('Failed to start on port $radarPort', className: "Radar", methodName: "start", stackTrace: stackTrace, error: e);
     }
   }
 
@@ -47,7 +47,9 @@ class Radar {
   }
 
   /// This function searches for devices on the local network by connecting to each IP address and port on the local network
-  /// and sending a request to the radar server. It returns a stream of lists of DeviceInfo objects, each list containing
+  /// and sending a request to the radar server.
+  ///
+  /// It returns a stream of lists of DeviceInfo objects, each list containing
   /// the devices found so far. It takes an optional radarPort parameter, which defaults to 62193, and a baseIp parameter,
   /// which defaults to the current device's IP address. It also takes an optional skipCurrentDevice parameter, which
   /// defaults to true, which tells the function whether or not to skip the current device's IP address.

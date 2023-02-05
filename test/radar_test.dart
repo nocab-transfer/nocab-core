@@ -10,7 +10,7 @@ void main() {
       ));
 
   test('Radar Test', () async {
-    await Radar().start(onError: (p0) => throw p0);
+    await Radar().start();
 
     List<DeviceInfo> devices = [];
     devices = await Radar.searchForDevices(baseIp: "127.0.0", skipCurrentDevice: false).last;

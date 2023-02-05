@@ -6,7 +6,7 @@ import 'package:path/path.dart';
 
 extension Responder on ShareRequest {
   /// Accepts the request and starts the transfer
-  Future<void> accept({Function(CoreError)? onError, required Directory downloadDirectory, required Directory tempDirectory}) async {
+  Future<Receiver> accept({required Directory downloadDirectory, required Directory tempDirectory}) async {
     NoCabCore.logger.info("Accepting request", className: "RequestResponder");
     try {
       if (!downloadDirectory.existsSync()) {
@@ -45,16 +45,21 @@ extension Responder on ShareRequest {
 
       NoCabCore.logger.info("Registering response", className: "RequestResponder");
       registerResponse(shareResponse);
+      return linkedTransfer as Receiver;
     } catch (e, stackTrace) {
       NoCabCore.logger.error("Error while accepting request", className: "RequestResponder", error: e, stackTrace: stackTrace);
-      onError?.call(CoreError("Error while accepting request: ${e.toString()}",
-          className: "RequestResponder", methodName: "accept", stackTrace: stackTrace, error: e));
-      return;
+      throw CoreError(
+        "Error while accepting request: ${e.toString()}",
+        className: "RequestResponder",
+        methodName: "accept",
+        stackTrace: stackTrace,
+        error: e,
+      );
     }
   }
 
   /// Rejects the request
-  void reject({Function(CoreError)? onError, String? info}) {
+  void reject({String? info}) {
     NoCabCore.logger.info("Rejecting request", className: "RequestResponder");
     try {
       var shareResponse = ShareResponse(response: false, info: info ?? "User rejected the request");
@@ -65,8 +70,13 @@ extension Responder on ShareRequest {
       registerResponse(shareResponse);
     } catch (e, stackTrace) {
       NoCabCore.logger.error("Error while rejecting request", className: "RequestResponder", error: e, stackTrace: stackTrace);
-      onError?.call(CoreError("Error while rejecting request: ${e.toString()}",
-          className: "RequestResponder", methodName: "reject", stackTrace: stackTrace, error: e));
+      throw CoreError(
+        "Error while rejecting request: ${e.toString()}",
+        className: "RequestResponder",
+        methodName: "reject",
+        stackTrace: stackTrace,
+        error: e,
+      );
     }
   }
 }

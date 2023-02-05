@@ -41,9 +41,7 @@ class RequestMaker {
   /// [receiverDeviceInfo] is the [DeviceInfo] of the receiver.
   ///
   /// [request] is the [ShareRequest] object.
-  ///
-  /// [onError] is the callback function that will be called when an error occurs.
-  static Future<void> requestTo(DeviceInfo receiverDeviceInfo, {required ShareRequest request, Function(CoreError)? onError}) async {
+  static Future<void> requestTo(DeviceInfo receiverDeviceInfo, {required ShareRequest request}) async {
     Socket socket;
 
     try {
@@ -53,11 +51,20 @@ class RequestMaker {
           "Request sent to ${receiverDeviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort}) with ${request.files.length} files",
           className: "RequestMaker");
     } catch (e, stackTrace) {
-      NoCabCore.logger.error("Cannot request to ${receiverDeviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})",
-          className: "RequestMaker", error: e, stackTrace: stackTrace);
-      onError?.call(CoreError("Cannot request to ${receiverDeviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})",
-          className: "RequestMaker", methodName: "requestTo", stackTrace: stackTrace, error: e));
-      return;
+      NoCabCore.logger.error(
+        "Cannot request to ${receiverDeviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})",
+        className: "RequestMaker",
+        error: e,
+        stackTrace: stackTrace,
+      );
+
+      throw CoreError(
+        "Cannot request to ${receiverDeviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})",
+        className: "RequestMaker",
+        methodName: "requestTo",
+        stackTrace: stackTrace,
+        error: e,
+      );
     }
 
     ShareResponse shareResponse;
@@ -78,9 +85,8 @@ class RequestMaker {
         error: e,
         stackTrace: stackTrace,
       );
-      onError?.call(CoreError("Cannot parse response from ${receiverDeviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})",
-          className: "RequestMaker", methodName: "requestTo", stackTrace: stackTrace, error: e));
-      return;
+      throw CoreError("Cannot parse response from ${receiverDeviceInfo.name}(${receiverDeviceInfo.ip}:${receiverDeviceInfo.requestPort})",
+          className: "RequestMaker", methodName: "requestTo", stackTrace: stackTrace, error: e);
     }
 
     if (!shareResponse.response) {

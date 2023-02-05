@@ -14,7 +14,7 @@ void main() {
   test(
     'Request Test',
     () async {
-      await RequestListener().start(onError: (p0) => throw p0);
+      await RequestListener().start();
 
       File file = File("test/_testFile");
 
