@@ -133,7 +133,7 @@ class DataHandler {
     mainControlPort.listen((message) async {
       if (message == "cancel") {
         loggerPort.send(Log(LogLevel.INFO, "Received cancel message", "overridden", className: "DataHandler($isolateName)"));
-        workerIsolate.kill();
+        workerIsolate.kill(priority: Isolate.immediate);
         handledReceiverPort.close();
         sendPort.send(CancelReport(cancelTime: DateTime.now()));
         loggerPort.send(Log(LogLevel.INFO, "Sent cancel report to main isolate", "overridden", className: "DataHandler($isolateName)"));
