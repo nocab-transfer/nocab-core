@@ -66,7 +66,7 @@ class DataHandler {
     Function(List args) mainTransferFunc = args[0]; // This is the transfer that we will track data from
     SendPort sendPort = args[1]; // This is the port that the isolate will send data to
     List transferArgs = args[2]; // This is the arguments that we will pass to the isolate
-    SendPort loggerPort = args[3]; // This is the logger that we will use
+    Logger logger = Logger.chained(args[3] as SendPort); // This is the logger that we will use
 
     ReceivePort handledReceiverPort = ReceivePort(); // This is the port that we will track data from
 
@@ -96,7 +96,7 @@ class DataHandler {
       if (writtenBytes / stopwatch.elapsedMilliseconds * 1000 == 0) {
         timeoutIndicatorMilliseconds += sendDuration.inMilliseconds;
         if (timeoutIndicatorMilliseconds >= 30000) {
-          loggerPort.send(Log(LogLevel.ERROR, "Transfer timed out", "overridden", className: "DataHandler($isolateName)"));
+          logger.info("Transfer timed out", className: "DataHandler($isolateName)");
           sendPort.send(ErrorReport(
             error: CoreError(
               'Transfer timed out',
@@ -132,11 +132,11 @@ class DataHandler {
 
     mainControlPort.listen((message) async {
       if (message == "cancel") {
-        loggerPort.send(Log(LogLevel.INFO, "Received cancel message", "overridden", className: "DataHandler($isolateName)"));
+        logger.info("Received cancel message", className: "DataHandler($isolateName)");
         workerIsolate.kill(priority: Isolate.immediate);
         handledReceiverPort.close();
         sendPort.send(CancelReport(cancelTime: DateTime.now()));
-        loggerPort.send(Log(LogLevel.INFO, "Sent cancel report to main isolate", "overridden", className: "DataHandler($isolateName)"));
+        logger.info("Sent cancel report to main isolate", className: "DataHandler($isolateName)");
         mainControlPort.close();
         timer.cancel();
         Isolate.exit();
@@ -151,7 +151,7 @@ class DataHandler {
       if (data is! TransferEvent) return;
       switch (data.type) {
         case TransferEventType.start:
-          loggerPort.send(Log(LogLevel.INFO, "Received start event resetting stopwatch", "overridden", className: "DataHandler($isolateName)"));
+          logger.info("Received start event resetting stopwatch", className: "DataHandler($isolateName)");
           stopwatch.reset();
           stopwatch.start();
           writtenBytes = 0;
@@ -163,14 +163,14 @@ class DataHandler {
           currentFile = data.currentFile;
           break;
         case TransferEventType.fileEnd:
-          loggerPort.send(Log(LogLevel.INFO, "Received file end event resetting stopwatch", "overridden", className: "DataHandler($isolateName)"));
+          logger.info("Received file end event resetting stopwatch", className: "DataHandler($isolateName)");
           stopwatch.stop();
           stopwatch.reset();
           sendPort.send(FileEndReport(fileInfo: data.currentFile!));
           filesTransferred.add(data.currentFile!);
           break;
         case TransferEventType.end:
-          loggerPort.send(Log(LogLevel.INFO, "Received end event resetting stopwatch", "overridden", className: "DataHandler($isolateName)"));
+          logger.info("Received end event resetting stopwatch", className: "DataHandler($isolateName)");
           stopwatch.stop();
           workerIsolate.kill();
           handledReceiverPort.close();
@@ -179,7 +179,7 @@ class DataHandler {
           Isolate.current.kill();
           break;
         case TransferEventType.error:
-          loggerPort.send(Log(LogLevel.ERROR, "Received error event resetting stopwatch", "overridden", className: "DataHandler($isolateName)"));
+          logger.error("Received error event resetting stopwatch", className: "DataHandler($isolateName)");
           stopwatch.stop();
           workerIsolate.kill(priority: Isolate.immediate);
           handledReceiverPort.close();

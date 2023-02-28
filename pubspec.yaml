@@ -14,7 +14,6 @@ dependencies:
   nocab_logger:
     git:
       url: https://github.com/nocab-transfer/nocab-logger
-      ref: pure-dart
 
 dev_dependencies:
   lints: ^2.0.0
