@@ -25,71 +25,75 @@ class TransferController {
 
   Future<void> _initControlSocket() async {
     // Request created by Sender. We should listen for a connection on Receiver side
-    if (transfer is Sender) {
-      try {
-        _serverSocket = await ServerSocket.bind(InternetAddress.anyIPv4, transfer.controlPort).then((server) {
-          NoCabCore.logger.info(
-            'Listening for initial control connection on ${server.address.address}:${server.port}',
+    if (transfer is Sender) return _initAsSender();
+
+    // On receiver side, we should connect to sender control socket
+    return _initAsReceiver();
+  }
+
+  Future<void> _initAsSender() async {
+    try {
+      _serverSocket = await ServerSocket.bind(InternetAddress.anyIPv4, transfer.controlPort);
+      NoCabCore.logger.info(
+        'Listening for initial control connection on ${_serverSocket!.address.address}:${_serverSocket!.port}',
+        className: 'TransferController(${transfer.runtimeType})',
+      );
+
+      _serverSocket!.listen((socket) async {
+        // if ip is not the same as the one we expect, close the socket
+        if (transfer.deviceInfo.ip != socket.remoteAddress.address) {
+          socket.destroy();
+
+          NoCabCore.logger.warning(
+            'Received connection from ${socket.remoteAddress.address} but expected ${transfer.deviceInfo.ip}',
             className: 'TransferController(${transfer.runtimeType})',
           );
 
-          server.listen((socket) async {
-            // if ip is not the same as the one we expect, close the socket
-            if (transfer.deviceInfo.ip != socket.remoteAddress.address) {
-              socket.destroy();
+          return;
+        }
 
-              NoCabCore.logger.warning(
-                'Received connection from ${socket.remoteAddress.address} but expected ${transfer.deviceInfo.ip}',
-                className: 'TransferController(${transfer.runtimeType})',
-              );
-
-              return;
-            }
-
-            NoCabCore.logger.info(
-              'Received initial control connection from ${socket.remoteAddress.address}',
-              className: 'TransferController(${transfer.runtimeType})',
-            );
-
-            _controlSocket = socket;
-            _listenSocket(_controlSocket!);
-
-            NoCabCore.logger.info('Closing control server', className: 'TransferController(${transfer.runtimeType})');
-            server.close();
-          });
-          return null;
-        });
-      } catch (e, stackTrace) {
-        NoCabCore.logger.error(
-          'Error binding to control socket',
+        NoCabCore.logger.info(
+          'Received initial control connection from ${socket.remoteAddress.address}',
           className: 'TransferController(${transfer.runtimeType})',
-          error: e,
-          stackTrace: stackTrace,
-        );
-        _controlSocket?.destroy();
-      }
-    } else {
-      // On receiver side, we should connect to sender control socket
-      try {
-        Socket.connect(transfer.deviceInfo.ip, transfer.controlPort).then((socket) {
-          NoCabCore.logger.info(
-            'Connected to control socket ${socket.remoteAddress.address}:${socket.remotePort}',
-            className: 'TransferController(${transfer.runtimeType})',
-          );
-
-          _controlSocket = socket;
-          _listenSocket(socket);
-        });
-      } catch (e, stackTrace) {
-        NoCabCore.logger.error(
-          'Error connecting to control socket',
-          className: 'TransferController(${transfer.runtimeType})',
-          error: e,
-          stackTrace: stackTrace,
         );
 
-        _controlSocket?.destroy();
-      }
+        _controlSocket = socket;
+        _listenSocket(_controlSocket!);
+
+        NoCabCore.logger.info('Closing control server', className: 'TransferController(${transfer.runtimeType})');
+        _serverSocket!.close();
+
+        return;
+      });
+    } catch (e, stackTrace) {
+      NoCabCore.logger.error(
+        'Error binding to control socket',
+        className: 'TransferController(${transfer.runtimeType})',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      _controlSocket?.destroy();
+    }
+  }
+
+  Future<void> _initAsReceiver() async {
+    try {
+      _controlSocket = await Socket.connect(transfer.deviceInfo.ip, transfer.controlPort);
+
+      NoCabCore.logger.info(
+        'Connected to control socket ${_controlSocket!.remoteAddress.address}:${_controlSocket!.remotePort}',
+        className: 'TransferController(${transfer.runtimeType})',
+      );
+
+      _listenSocket(_controlSocket!);
+    } catch (e, stackTrace) {
+      NoCabCore.logger.error(
+        'Error connecting to control socket',
+        className: 'TransferController(${transfer.runtimeType})',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      _controlSocket?.destroy();
     }
   }
 
@@ -149,10 +153,10 @@ class TransferController {
   Future<void> sendCancel() async {
     if (!await _waitForControlSocket()) return;
 
-    NoCabCore.logger.info('Sending cancel to control socket ${_controlSocket?.remoteAddress.address}:${_controlSocket?.remotePort}',
-        className: 'TransferController(${transfer.runtimeType})');
-
     try {
+      NoCabCore.logger.info('Sending cancel to control socket ${_controlSocket?.remoteAddress.address}:${_controlSocket?.remotePort}',
+          className: 'TransferController(${transfer.runtimeType})');
+
       _controlSocket?.write(base64.encode(utf8.encode(jsonEncode({
         'transferUuid': transfer.uuid,
         'type': 'cancel',

@@ -30,14 +30,15 @@ class RequestListener {
       throw CoreError("Socket binding error", className: "RequestListener", methodName: "start", stackTrace: stackTrace, error: e);
     }
 
-    serverSocket?.listen((socket) {
+    serverSocket?.listen((socket) async {
       try {
         if (latestRequest?.isResponded == false) {
           NoCabCore.logger.info("${socket.remoteAddress.address}:${socket.remotePort} has been rejected because another request is in progress",
               className: "RequestListener");
           var shareResponse = ShareResponse(response: false, info: "Another request is in progress");
           socket.write(base64.encode(utf8.encode(json.encode(shareResponse.toJson()))));
-          socket.flush().then((value) => socket.destroy());
+          await socket.flush();
+          socket.destroy();
           return;
         }
       } catch (e, stackTrace) {
@@ -60,6 +61,9 @@ class RequestListener {
                     "${socket.remoteAddress.address}:${socket.remotePort} has been automatically rejected because the connection has been lost",
                     className: "RequestListener");
               }
+            }).onError((error, stackTrace) {
+              NoCabCore.logger.error("Socket error", className: "RequestListener", error: error, stackTrace: stackTrace);
+              socket.destroy();
             });
             _requestHandler(latestRequest!, socket);
           } catch (e, stackTrace) {

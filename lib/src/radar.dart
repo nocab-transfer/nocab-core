@@ -31,7 +31,10 @@ class Radar {
         } catch (e) {
           NoCabCore.logger.error('Failed to write current deviceInfo', className: 'Radar', error: e);
         } finally {
-          socket.flush().then((value) => socket.destroy());
+          socket.flush().then((value) => socket.destroy()).onError((e, stackTrace) {
+            NoCabCore.logger.error('Failed to flush and destroy socket', className: 'Radar', error: e, stackTrace: stackTrace);
+            socket.destroy();
+          });
         }
       });
     } catch (e, stackTrace) {
