@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:nocab_core/nocab_core.dart';
-import 'package:nocab_logger/nocab_logger.dart';
 
 class RequestListener {
   static final RequestListener _singleton = RequestListener._internal();
@@ -18,31 +17,34 @@ class RequestListener {
   ServerSocket? serverSocket;
 
   ShareRequest? latestRequest;
-  Future<void> start({Function(CoreError)? onError}) async {
-    Logger().info("Starting listening", "RequestListener");
+
+  /// Starts listening for requests.
+  Future<void> start() async {
+    NoCabCore.logger.info("Starting listening", className: "RequestListener");
 
     try {
-      serverSocket = await ServerSocket.bind(InternetAddress.anyIPv4, DeviceManager().currentDeviceInfo.requestPort);
-      Logger().info("Listening on ${serverSocket!.address.address}:${serverSocket!.port}", "RequestListener");
+      serverSocket = await ServerSocket.bind(InternetAddress.anyIPv4, NoCabCore().currentDeviceInfo.requestPort);
+      NoCabCore.logger.info("Listening on ${serverSocket!.address.address}:${serverSocket!.port}", className: "RequestListener");
     } catch (e, stackTrace) {
-      Logger().error("Socket binding error", "RequestListener", error: e, stackTrace: stackTrace);
-      onError?.call(CoreError("Socket binding error", className: "RequestListener", methodName: "start", stackTrace: stackTrace, error: e));
+      NoCabCore.logger.error("Socket binding error", className: "RequestListener", error: e, stackTrace: stackTrace);
+      throw CoreError("Socket binding error", className: "RequestListener", methodName: "start", stackTrace: stackTrace, error: e);
     }
 
-    serverSocket?.listen((socket) {
+    serverSocket?.listen((socket) async {
       try {
         if (latestRequest?.isResponded == false) {
-          Logger().info(
-              "${socket.remoteAddress.address}:${socket.remotePort} has been rejected because another request is in progress", "RequestListener");
+          NoCabCore.logger.info("${socket.remoteAddress.address}:${socket.remotePort} has been rejected because another request is in progress",
+              className: "RequestListener");
           var shareResponse = ShareResponse(response: false, info: "Another request is in progress");
           socket.write(base64.encode(utf8.encode(json.encode(shareResponse.toJson()))));
-          socket.flush().then((value) => socket.close());
+          await socket.flush();
+          socket.destroy();
           return;
         }
       } catch (e, stackTrace) {
-        onError?.call(CoreError("Socket error", className: "RequestListener", methodName: "start", stackTrace: stackTrace, error: e));
-        Logger().error("Socket error", "RequestListener", error: e, stackTrace: stackTrace);
-        socket.close();
+        NoCabCore.logger.error("Socket error", className: "RequestListener", error: e, stackTrace: stackTrace);
+        socket.destroy();
+        throw CoreError("Socket error", className: "RequestListener", methodName: "start", stackTrace: stackTrace, error: e);
       }
 
       socket.listen(
@@ -55,17 +57,25 @@ class RequestListener {
             socket.done.then((value) {
               if (latestRequest?.isResponded == false) {
                 latestRequest!.registerResponse(ShareResponse(response: false, info: "Connection lost"));
-                Logger().info(
+                NoCabCore.logger.info(
                     "${socket.remoteAddress.address}:${socket.remotePort} has been automatically rejected because the connection has been lost",
-                    "RequestListener");
+                    className: "RequestListener");
               }
+            }).onError((error, stackTrace) {
+              NoCabCore.logger.error("Socket error", className: "RequestListener", error: error, stackTrace: stackTrace);
+              socket.destroy();
             });
             _requestHandler(latestRequest!, socket);
           } catch (e, stackTrace) {
-            Logger().error("Socket error while parsing request", "RequestListener", error: e, stackTrace: stackTrace);
-            onError?.call(
-                CoreError("Socket error while parsing request", className: "RequestListener", methodName: "start", stackTrace: stackTrace, error: e));
-            socket.close();
+            NoCabCore.logger.error("Socket error while parsing request", className: "RequestListener", error: e, stackTrace: stackTrace);
+            socket.destroy();
+            throw CoreError(
+              "Socket error while parsing request",
+              className: "RequestListener",
+              methodName: "start",
+              stackTrace: stackTrace,
+              error: e,
+            );
           }
         },
       );
@@ -73,17 +83,17 @@ class RequestListener {
   }
 
   void _requestHandler(ShareRequest request, Socket socket) {
-    Logger().info(
+    NoCabCore.logger.info(
       "${request.deviceInfo.name}(${socket.remoteAddress.address}:${socket.remotePort}) has requested to share ${request.files.length} files",
-      "RequestListener",
+      className: "RequestListener",
     );
 
     _requestController.add(request);
 
     if (request.coreVersion == null) {
-      Logger().info(
+      NoCabCore.logger.info(
           "${request.deviceInfo.name}(${socket.remoteAddress.address}:${socket.remotePort}) has been rejected because of the core version missing",
-          "RequestListener");
+          className: "RequestListener");
       request.reject(info: "Core version missing in the request. Can't proceed. Please update the requester app");
       return;
     }
@@ -102,21 +112,22 @@ class RequestListener {
           }
         }
 
-        Logger().info(
+        NoCabCore.logger.info(
             "${request.deviceInfo.name}(${socket.remoteAddress.address}:${socket.remotePort}) has been rejected because of the core version mismatch",
-            "RequestListener");
+            className: "RequestListener");
         request.reject(info: "Core version mismatch. Please update the ${isCurrentVersionOlder ? "requester" : "receiver"} app}");
         return;
       } catch (e, stackTrace) {
-        Logger().error("Core version parsing error", "RequestListener", error: e, stackTrace: stackTrace);
+        NoCabCore.logger.error("Core version parsing error", className: "RequestListener", error: e, stackTrace: stackTrace);
         request.reject(info: "Core version parsing error. Can't proceed");
         return;
       }
     }
   }
 
+  /// Stops listening for requests.
   void stop() {
-    Logger().info("Stopped listening", "RequestListener");
+    NoCabCore.logger.info("Stopped listening", className: "RequestListener");
     serverSocket?.close();
   }
 }

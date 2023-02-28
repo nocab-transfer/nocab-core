@@ -2,20 +2,23 @@ import 'dart:io';
 
 import 'package:nocab_core/nocab_core.dart';
 import 'package:test/test.dart';
-import 'package:nocab_logger/nocab_logger.dart';
 
 void main() {
+  setUp(() => NoCabCore.init(
+        deviceName: "Sender",
+        deviceIp: "127.0.0.1",
+        requestPort: 5001,
+        logFolderPath: 'test',
+      ));
+
   test(
     'Request Test',
     () async {
-      await Logger.downloadIsarCore();
-
-      DeviceManager().initialize("Sender", "127.0.0.1", 5001);
-      await RequestListener().start(onError: (p0) => throw p0);
+      await RequestListener().start();
 
       File file = File("test/_testFile");
 
-      var request = RequestMaker.create(files: [file], transferPort: 1234);
+      var request = RequestMaker.create(files: [file], transferPort: 1234, controlPort: 1235);
 
       RequestMaker.requestTo(
         DeviceInfo(name: "Listener", ip: "127.0.0.1", requestPort: 5001, opsystem: Platform.operatingSystemVersion),
@@ -32,4 +35,6 @@ void main() {
     },
     timeout: Timeout(Duration(seconds: 5)),
   );
+
+  tearDown(() => NoCabCore.dispose());
 }

@@ -1,14 +1,15 @@
-name: Check Code
+name: Check Code Win
 
-on: [ push, pull_request ]
+on: workflow_dispatch
 
 jobs:
   build:
     name: Analyze Dart
-    runs-on: ubuntu-latest
-    container:
-      image:  dart:beta
+    runs-on: windows-latest
     steps:
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'master'
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Install dependencies
@@ -19,4 +20,4 @@ jobs:
           line-length: 150
           fail-on-warnings: true
       - name: Run tests
-        run: dart test
+        run: dart test -j 1

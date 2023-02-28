@@ -7,6 +7,7 @@ part 'end_report.dart';
 part 'error_report.dart';
 part 'fileend_report.dart';
 part 'start_report.dart';
+part 'cancel_report.dart';
 
 abstract class Report {
   Report();
